@@ -1,0 +1,19 @@
+﻿using XYZ.WShop.Application.Dtos;
+using XYZ.WShop.Application.Helpers;
+using XYZ.WShop.Application.Dtos.Orders;
+using XYZ.WShop.Domain.Enums;
+
+namespace XYZ.WShop.Application.Interfaces.Services
+{
+    public interface IOrderService
+    {
+        Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder);
+        Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id);
+        Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
+            Guid businessId,
+            int page = 1,
+            int pageSize = 10,
+            string? searchTerm = null);
+        Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id);
+    }
+}
