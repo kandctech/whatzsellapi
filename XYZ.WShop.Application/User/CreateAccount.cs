@@ -6,6 +6,7 @@ namespace XYZ.WShop.Application.User
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string BusinessName { get; set; }
+        public string? Currency { get; set; }
         public string BusinessAddress { get; set; }
         public string Password { get; set; }
         public string PhoneNumber { get; set; }

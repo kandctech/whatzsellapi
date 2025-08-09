@@ -250,10 +250,10 @@ namespace XZY.WShop.Infrastructure.Services
         }
 
         public async Task<byte[]> ExportToPdf(Guid businessId,
-            string? searchTerm = null,
-            string? category = null,
-            DateTime? startDate = null,
-            DateTime? endDate = null)
+        string? searchTerm = null,
+        string? category = null,
+        DateTime? startDate = null,
+        DateTime? endDate = null)
         {
             List<ExpenseResponse> expenses = new List<ExpenseResponse>();
 
@@ -277,9 +277,18 @@ namespace XZY.WShop.Infrastructure.Services
                 PdfWriter.GetInstance(document, memoryStream);
                 document.Open();
 
-                // Add title
+                // Add title with date range
                 var titleFont = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 18);
-                var title = new Paragraph("Expense Report", titleFont);
+                var titleText = "Expense Report";
+
+                //if (startDate.HasValue || endDate.HasValue)
+                //{
+                //    string startText = startDate.HasValue ? startDate.Value.ToShortDateString() : "Start";
+                //    string endText = endDate.HasValue ? endDate.Value.ToShortDateString() : "End";
+                //    titleText += $" ({startText} - {endText})";
+                //}
+
+                var title = new Paragraph(titleText, titleFont);
                 title.Alignment = Element.ALIGN_CENTER;
                 document.Add(title);
 
@@ -299,8 +308,9 @@ namespace XZY.WShop.Infrastructure.Services
                 // Add data
                 foreach (var expense in expenses)
                 {
+                    var categoryItem = catDic.GetValueOrDefault(expense.Category);
                     AddCell(table, expense.Amount.ToString("C"));
-                    AddCell(table, expense.Category);
+                    AddCell(table, categoryItem != null ? categoryItem.Label : "N/A");
                     AddCell(table, expense.CreatedByFullName);
                     AddCell(table, expense.Description);
                     AddCell(table, expense.ExpenseDate.ToShortDateString());

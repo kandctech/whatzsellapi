@@ -7,6 +7,7 @@ namespace XYZ.WShop.Application.Dtos.User
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string BusinessName { get; set; }
+        public string? Currency { get; set; }
         public string? BusinessDescription { get; set; }
         public string? BusinessCategory { get; set; }
         public string BusinessAddress { get; set; }

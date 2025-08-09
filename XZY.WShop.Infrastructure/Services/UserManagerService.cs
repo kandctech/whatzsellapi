@@ -80,6 +80,7 @@ namespace XZY.WShop.Infrastructure.Services
                 Name = user.BusinessName,
                 Slug = slug,
                 IsActive = true,
+                Currency = user.Currency,
                 PhoneNumber = user.PhoneNumber,
                 WalletBalance = 0M,
                 Id = businessId,
@@ -112,6 +113,7 @@ namespace XZY.WShop.Infrastructure.Services
             profileModel.FirstName = user.FirstName;
             profileModel.LastName = user.LastName;
             profileModel.BusinessName = user.BusinessName;
+            profileModel.Currency = user.Currency;
             profileModel.Slug = slug;
             profileModel.BusinessId = businessId;
             profileModel.BusinessAddress = user.BusinessAddress;
@@ -300,6 +302,7 @@ namespace XZY.WShop.Infrastructure.Services
             profileModel.Email = userToChange.Email;
             profileModel.FirstName = userToChange.FirstName;
             profileModel.LastName = userToChange.LastName;
+            profileModel.BusinessName = business.Currency;
             profileModel.BusinessName = business.Name;
             profileModel.BusinessId = business.Id;
             profileModel.BusinessAddress = business.Address;
@@ -511,6 +514,7 @@ namespace XZY.WShop.Infrastructure.Services
                 Id = Guid.Parse(userToEdit.Id),
                 BusinessAddress = business?.Address ?? string.Empty,
                 BusinessName = business?.Name ?? string.Empty,
+                Currency = business?.Currency ?? string.Empty,
                 BusinessCategory = business?.Category,
                 BusinessDescription = business?.Description ?? string.Empty,
                 Logo = business?.Logo ?? string.Empty,

@@ -11,6 +11,7 @@ namespace XYZ.WShop.Domain
     {
         public Guid Id { get; set; }
         public string Name { get; set; }
+        public string? Currency { get; set; }
         public string? Description { get; set; }
         public string? Category { get; set; }
         public string Slug { get; set; }
