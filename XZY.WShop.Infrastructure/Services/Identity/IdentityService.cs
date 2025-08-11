@@ -85,15 +85,7 @@ namespace XZY.WShop.Infrastructure.Services.Identity
         /// <returns>An <see cref="ResponseModel<IdentityTokenResponse>"/> object containing the user, role, and JWT token.</returns>
         public async Task<ResponseModel<UserProfileModel>> AuthenticateAsync(AuthLoginRequest request, string ipAddress)
         {
-            try
-            {
-                ApplicationUser user2 = await GetUserByEmailAsync(request.Email);
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
+         
             ApplicationUser user = await GetUserByEmailAsync(request.Email);
 
             if (user == null)

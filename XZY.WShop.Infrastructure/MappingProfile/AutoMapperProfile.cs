@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.WShop.Application.Dtos.Customer;
 using XYZ.WShop.Application.Dtos.Expense;
+using XYZ.WShop.Application.Dtos.Notification;
 using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Domain;
@@ -53,6 +54,9 @@ namespace XZY.WShop.Infrastructure.MappingProfile
             CreateMap<Expense, ExpenseResponse>()
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.CreatedBy))
                 .ReverseMap();
+
+            CreateMap<Notification, NotificationRequest>().ReverseMap();
+            CreateMap<Notification, NotificationResponse>().ReverseMap();
         }
     }
 }

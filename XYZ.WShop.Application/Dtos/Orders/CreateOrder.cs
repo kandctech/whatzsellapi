@@ -14,6 +14,8 @@ namespace XYZ.WShop.Application.Dtos.Orders
         public string? CustomerEmail { get; set; }
         public string CustomerPhoneNumber { get; set; }
         public decimal Amount { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public string? PaymentMethod { get; set; }
         public string? Note { get; set; }
         public List<OrderItemDto> OrderItems { get; set; }
     }

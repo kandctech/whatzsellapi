@@ -104,6 +104,7 @@ namespace XZY.WShop.Infrastructure.Services
                 BusinessId = busness.Id,
                 Products = productResponses,
                 Name = busness.Name,
+                PhoneNumber = busness.PhoneNumber,
                 Description = busness.Description ?? string.Empty,
                 Category = busness.Category,
                 Slug = slug,

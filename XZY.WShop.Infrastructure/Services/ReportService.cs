@@ -1,5 +1,8 @@
 ﻿
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using XYZ.WShop.Application.Dtos.Dashboard;
+using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Reports;
 using XYZ.WShop.Application.Interfaces.Services;
 using XZY.WShop.Infrastructure.Data;
@@ -9,12 +12,126 @@ namespace XYZ.WShop.Infrastructure.Services
     public class ReportService : IReportService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public ReportService(ApplicationDbContext context)
+        public ReportService(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
+        public async Task<DashboardResponse> GetReportDashbordAsync(Guid businessId)
+        {
+            var currentDate = DateTime.UtcNow;
+            var currentMonth = currentDate.Month;
+            var currentYear = currentDate.Year;
+
+            var todayUtc = new DateTime(currentDate.Year, currentDate.Month, currentDate.Day, 0, 0, 0, DateTimeKind.Utc);
+            var tomorrowStartUtc = todayUtc.AddDays(1);
+
+            DashboardResponse dashboardResponse = new DashboardResponse();
+
+            dashboardResponse.TodayTotalSale = _context.Orders
+                .Where(t => t.BusinessId == businessId
+                    && t.PaymentDate >= todayUtc
+                    && t.PaymentDate < tomorrowStartUtc)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            // This week's sales (from Monday to today)
+            var startOfWeek = currentDate.Date.AddDays(-(int)currentDate.DayOfWeek + (int)DayOfWeek.Monday);
+            if (currentDate.DayOfWeek == DayOfWeek.Sunday)
+            {
+                startOfWeek = startOfWeek.AddDays(-7);
+            }
+            startOfWeek = DateTime.SpecifyKind(startOfWeek, DateTimeKind.Utc);
+
+            dashboardResponse.ThisWkTotalSale = _context.Orders
+                .Where(t => t.BusinessId == businessId && t.PaymentDate >= startOfWeek && t.PaymentDate <= currentDate)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            // This month's sales
+            var firstDayOfMonth = new DateTime(currentYear, currentMonth, 1, 0, 0, 0, DateTimeKind.Utc);
+            var lastDayOfMonth = firstDayOfMonth.AddMonths(1).AddDays(-1).AddHours(23).AddMinutes(59).AddSeconds(59);
+            lastDayOfMonth = DateTime.SpecifyKind(lastDayOfMonth, DateTimeKind.Utc);
+
+            dashboardResponse.ThisMthTotalSale = _context.Orders
+                .Where(t => t.BusinessId == businessId && t.PaymentDate >= firstDayOfMonth && t.PaymentDate <= lastDayOfMonth)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            // This year's sales
+            var firstDayOfYear = new DateTime(currentYear, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+            var lastDayOfYear = new DateTime(currentYear, 12, 31, 23, 59, 59, DateTimeKind.Utc);
+
+            dashboardResponse.ThisYrTotalSale = _context.Orders
+                .Where(t => t.BusinessId == businessId && t.PaymentDate >= firstDayOfYear && t.PaymentDate <= lastDayOfYear)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            // Expense queries
+            dashboardResponse.TodayTotalExpense = _context.Expenses
+                .Where(t => t.BusinessId == businessId && t.ExpenseDate.Date == todayUtc)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            dashboardResponse.ThisWkTotalExpense = _context.Expenses
+                .Where(t => t.BusinessId == businessId && t.ExpenseDate >= startOfWeek && t.ExpenseDate <= currentDate)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            dashboardResponse.ThisMthTotalExpense = _context.Expenses
+                .Where(t => t.BusinessId == businessId && t.ExpenseDate >= firstDayOfMonth && t.ExpenseDate <= lastDayOfMonth)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            dashboardResponse.ThisYrTotalExpense = _context.Expenses
+                .Where(t => t.BusinessId == businessId && t.ExpenseDate >= firstDayOfYear && t.ExpenseDate <= lastDayOfYear)
+                .Sum(t => (decimal?)t.Amount) ?? 0;
+
+            var recentOrders = await _context.Orders
+                .Where(t => t.BusinessId == businessId)
+                .OrderByDescending(d => d.CreatedDate)
+                .Take(3)
+                .ToListAsync();
+
+            if (recentOrders.Any())
+            {
+                dashboardResponse.RecentOrders = _mapper.Map<List<OrderResponse>>(recentOrders);
+            }
+
+            // Best selling products query
+            var productSales = await _context.OrderItems
+                .Where(oi => oi.Order.BusinessId == businessId &&
+                             oi.Order.PaymentDate >= firstDayOfMonth &&
+                             oi.Order.PaymentDate <= lastDayOfMonth)
+                .GroupBy(oi => oi.ProductId)
+                .Select(g => new {
+                    ProductId = g.Key,
+                    ProductName = g.First().ProductName,
+                    TotalSales = g.Sum(oi => oi.Qty * oi.Amount),
+                    TotalQuantity = g.Sum(oi => oi.Qty)
+                })
+                .OrderByDescending(x => x.TotalSales)
+                .ToListAsync();
+
+            // Get total revenue for the month
+            var totalMonthlyRevenue = productSales.Sum(x => x.TotalSales);
+
+            // Get best selling product if any exists
+            if (productSales.Any())
+            {
+                var bestSeller = productSales.First();
+                dashboardResponse.BestSellingProductName = bestSeller.ProductName;
+                dashboardResponse.BestSellerQuantityThisMonth = bestSeller.TotalQuantity;
+                dashboardResponse.BestSellerRevenueThisMonth = bestSeller.TotalSales;
+                dashboardResponse.BestSellerRevenuePercentage =
+                    totalMonthlyRevenue > 0 ? (bestSeller.TotalSales / totalMonthlyRevenue) * 100 : 0;
+            }
+            else
+            {
+                dashboardResponse.BestSellingProductName = "No sales this month";
+                dashboardResponse.BestSellerRevenuePercentage = 0;
+                dashboardResponse.BestSellerQuantityThisMonth = 0;
+                dashboardResponse.BestSellerRevenueThisMonth = 0;
+            }
+
+            return dashboardResponse;
+        }
         public async Task<ReportResponseDto> GetReportDataAsync(ReportRequestDto request)
         {
             return request.ReportType switch

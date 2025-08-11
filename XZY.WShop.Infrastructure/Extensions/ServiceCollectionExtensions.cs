@@ -46,6 +46,7 @@ namespace XZY.WShop.Infrastructure.Extensions
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IUserManagerService, UserManagerService>();
             services.AddScoped<IIdentityService, IdentityService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 

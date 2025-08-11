@@ -71,11 +71,13 @@ namespace XZY.WShop.Infrastructure.Services
 
             var orderId = Guid.NewGuid();
             order.Id = orderId;
+            order.PaymentDate = createOrder.PaymentDate.ToUniversalTime();
             await _context.Orders.AddAsync(order);
 
             var count = await _context.Orders.Where(o=> o.BusinessId == order.BusinessId).CountAsync();
 
             order.OrderNumber = count.ToString("D6");
+
             await _context.SaveChangesAsync();
 
             var result = _mapper.Map<OrderResponse>(order);

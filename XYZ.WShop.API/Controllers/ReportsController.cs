@@ -6,7 +6,7 @@ using XYZ.WShop.Application.Interfaces.Services;
 
 namespace XYZ.WShop.API.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v{version:apiVersion}/reports")]
     public class ReportsController : BaseController
     {
@@ -27,6 +27,14 @@ namespace XYZ.WShop.API.Controllers
             };
 
             var result = await _reportService.GetReportDataAsync(request);
+            return Ok(result);
+        }
+
+        [HttpGet("dashboard/{businessId}")]
+        public async Task<IActionResult> GetDashboardReport(Guid businessId)
+        {
+
+            var result = await _reportService.GetReportDashbordAsync(businessId);
             return Ok(result);
         }
     }

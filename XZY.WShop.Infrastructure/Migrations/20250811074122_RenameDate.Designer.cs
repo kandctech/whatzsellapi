@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using XZY.WShop.Infrastructure.Data;
@@ -11,9 +12,11 @@ using XZY.WShop.Infrastructure.Data;
 namespace XZY.WShop.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250811074122_RenameDate")]
+    partial class RenameDate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -496,6 +499,12 @@ namespace XZY.WShop.Infrastructure.Migrations
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("Receiver")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("Sender")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.ToTable("Notifications");
@@ -558,9 +567,6 @@ namespace XZY.WShop.Infrastructure.Migrations
 
                     b.Property<bool?>("PaymentLinkExpired")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("PaymentMethod")
-                        .HasColumnType("text");
 
                     b.Property<Guid>("PaymentReference")
                         .HasColumnType("uuid");

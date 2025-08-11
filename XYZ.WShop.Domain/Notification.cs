@@ -13,12 +13,10 @@ namespace XYZ.WShop.Domain
         public Guid BusinessId { get; set; }
         public string Message { get; set; }
         public bool IsRead { get; set; }
-        public Guid Sender { get; set; }
-        public Guid Receiver { get; set; }
         public Guid CreatedBy { get; set; }
         public Guid ModifiedBy { get; set; }
-        public DateTime CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
         public DateTime ModifiedDate { get; set; }
-        public bool IsActive { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }

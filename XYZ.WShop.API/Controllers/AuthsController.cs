@@ -8,7 +8,6 @@ using XYZ.WShop.Application.Interfaces.Services.Identity;
 
 namespace XYZ.WShop.API.Controllers
 {
-    [Authorize]
     [Route("api/v{version:apiVersion}/auths")]
     public class AuthsController : BaseController
     {

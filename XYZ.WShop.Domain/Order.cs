@@ -16,7 +16,8 @@ namespace XYZ.WShop.Domain
         public DateTime? DatePaymentLinkGenerated { get; set; }
         public bool? PaymentLinkExpired { get; set; }
         public Guid PaymentReference { get; set; }
-        public DateTime PaidDate { get; set; }
+        public DateTime PaymentDate { get; set; }
+        public string? PaymentMethod { get; set; }
         public DateTime CancelDate { get; set; }
 
         public OrderStatus Status { get; set; }
