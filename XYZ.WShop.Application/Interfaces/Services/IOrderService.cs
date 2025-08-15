@@ -1,7 +1,6 @@
 ﻿using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Dtos.Orders;
-using XYZ.WShop.Domain.Enums;
 
 namespace XYZ.WShop.Application.Interfaces.Services
 {
@@ -13,7 +12,18 @@ namespace XYZ.WShop.Application.Interfaces.Services
             Guid businessId,
             int page = 1,
             int pageSize = 10,
-            string? searchTerm = null);
+            string? searchTerm = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null);
+        Task<ResponseModel<PagedList<OrderResponse>>> GetOrderByCustomerIdAsync(
+       Guid businessId,
+         Guid customerId,
+       int page = 1,
+       int pageSize = 10,
+       string? searchTerm = null);
         Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id);
+        Task<byte[]> ExportOrdersToPdf(Guid businessId, DateTime? startDate = null, DateTime? endDate = null);
+        Task<byte[]> ExportOrdersToExcel(Guid businessId, DateTime? startDate = null,
+                DateTime? endDate = null);
     }
 }

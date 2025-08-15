@@ -77,13 +77,6 @@ namespace XZY.WShop.Infrastructure.Services
                 .Where(e => e.BusinessId == businessId)
                 .AsQueryable();
 
-            if (!string.IsNullOrWhiteSpace(searchTerm))
-            {
-                query = query.Where(e =>
-                    e.Description.Contains(searchTerm));
-
-            }
-
             if (!string.IsNullOrWhiteSpace(category))
             {
                 query = query.Where(e => e.Category.ToLower() == category.ToLower());
@@ -91,14 +84,21 @@ namespace XZY.WShop.Infrastructure.Services
 
             if (startDate.HasValue)
             {
-                var startUtc = startDate.Value.ToUniversalTime(); 
+                var startUtc = startDate.Value.ToUniversalTime();
                 query = query.Where(e => e.ExpenseDate >= startUtc);
             }
 
             if (endDate.HasValue)
             {
-                var endUtc = endDate.Value.AddDays(1).AddTicks(-1).ToUniversalTime(); 
+                var endUtc = endDate.Value.AddDays(1).AddTicks(-1).ToUniversalTime();
                 query = query.Where(e => e.ExpenseDate <= endUtc);
+            }
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(e =>
+                    e.Description.Contains(searchTerm));
+
             }
 
             var totalCount = await query.CountAsync();

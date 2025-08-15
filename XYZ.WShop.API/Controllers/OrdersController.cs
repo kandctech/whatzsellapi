@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Interfaces.Services;
+using XZY.WShop.Infrastructure.Services;
 
 namespace XYZ.WShop.API.Controllers
 {
@@ -32,9 +32,11 @@ namespace XYZ.WShop.API.Controllers
              [FromQuery] Guid businessId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
-            [FromQuery] string? searchTerm = null)
+            [FromQuery] string? searchTerm = null,
+            [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
         {
-            return Ok(await _orderService.GetAllAsync(businessId, page, pageSize, searchTerm));
+            return Ok(await _orderService.GetAllAsync(businessId, page, pageSize, searchTerm, startDate, endDate));
         }
 
         [HttpPost]
@@ -47,6 +49,33 @@ namespace XYZ.WShop.API.Controllers
         public async Task<IActionResult> DeleteOrder(Guid id)
         {
             return Ok(await _orderService.DeleteAsync(id));
+        }
+
+        [HttpGet("orders-by-customer-id")]
+        public async Task<IActionResult> GetOrdersByCustomerId(
+           [FromQuery] Guid businessId,
+            [FromQuery] Guid customerId,
+          [FromQuery] int page = 1,
+          [FromQuery] int pageSize = 10,
+          [FromQuery] string? searchTerm = null)
+        {
+            return Ok(await _orderService.GetOrderByCustomerIdAsync(businessId, customerId, page, pageSize, searchTerm));
+        }
+
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportToExcel(Guid businessId, [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
+        {
+            var excelBytes = await _orderService.ExportOrdersToExcel(businessId, startDate, endDate);
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Products.xlsx");
+        }
+
+        [HttpGet("export-pdf")]
+        public async Task<IActionResult> ExportToPdf(Guid businessId, [FromQuery] DateTime? startDate = null,
+            [FromQuery] DateTime? endDate = null)
+        {
+            var pdfBytes = await _orderService.ExportOrdersToPdf(businessId, startDate, endDate);
+            return File(pdfBytes, "application/pdf", $"Products{DateTime.UtcNow.Ticks}.pdf");
         }
     }
 }

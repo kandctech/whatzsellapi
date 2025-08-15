@@ -26,6 +26,8 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Customer> Customers { get; set; }
         public DbSet<Expense> Expenses { get; set; }
+        public DbSet<Subscription> Subscriptions { get; set; }
+        public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<Audit> Audits { get; set; }
         public DbSet<SaleActivity> SaleActivities { get; set; }

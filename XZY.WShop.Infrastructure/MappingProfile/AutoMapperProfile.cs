@@ -10,6 +10,7 @@ using XYZ.WShop.Application.Dtos.Expense;
 using XYZ.WShop.Application.Dtos.Notification;
 using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Product;
+using XYZ.WShop.Application.Dtos.Subscription;
 using XYZ.WShop.Domain;
 
 namespace XZY.WShop.Infrastructure.MappingProfile
@@ -34,9 +35,21 @@ namespace XZY.WShop.Infrastructure.MappingProfile
 
             CreateMap<Product, UpdateProductRequest>().ReverseMap();
 
-            CreateMap<Customer, CreateCustomer>().ReverseMap();
-            CreateMap<UpdateCustomer, Customer>().ReverseMap();
-            CreateMap<Customer, CustomerResponse>().ReverseMap();
+            CreateMap<CreateCustomer, Customer>()
+       .ForMember(dest => dest.Tags, opt => opt.MapFrom(src =>
+           src.Tags != null ? string.Join(",", src.Tags) : null));
+
+            CreateMap<UpdateCustomer, Customer>()
+         .ForMember(dest => dest.Tags, opt => opt.MapFrom(src =>
+             src.Tags != null ? string.Join(",", src.Tags) : null));
+
+            CreateMap<Customer, CustomerResponse>()
+                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src =>
+                    string.IsNullOrEmpty(src.Tags)
+                        ? Array.Empty<string>()
+                        : src.Tags.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)));
+
+
 
             CreateMap<Order, CreateOrder>().ReverseMap();
             CreateMap<Order, OrderResponse>().ReverseMap();
@@ -57,6 +70,10 @@ namespace XZY.WShop.Infrastructure.MappingProfile
 
             CreateMap<Notification, NotificationRequest>().ReverseMap();
             CreateMap<Notification, NotificationResponse>().ReverseMap();
+
+            CreateMap<SubscriptionPlan, SubscriptionPlanRequest>().ReverseMap();
+            CreateMap<SubscriptionPlanUpdateRequest, SubscriptionPlan>().ReverseMap();
+            CreateMap<SubscriptionPlan, SubscriptionPlanResponse>().ReverseMap();
         }
     }
 }

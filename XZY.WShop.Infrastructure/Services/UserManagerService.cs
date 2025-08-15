@@ -80,6 +80,7 @@ namespace XZY.WShop.Infrastructure.Services
                 Name = user.BusinessName,
                 Slug = slug,
                 IsActive = true,
+                Email = user.Email,
                 Currency = user.Currency,
                 PhoneNumber = user.PhoneNumber,
                 WalletBalance = 0M,

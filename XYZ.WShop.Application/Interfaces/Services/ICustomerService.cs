@@ -20,5 +20,8 @@ namespace XYZ.WShop.Application.Interfaces.Services
         Task<ResponseModel<CustomerResponse>> GetByIdAsync(Guid id);
 
         Task<ResponseModel<CustomerResponse>> UpdateAsync(UpdateCustomer updateCustomer);
+
+        Task<byte[]> ExportCustomersToPdf(Guid businessId);
+        Task<byte[]> ExportCustomersToExcel(Guid businessId);
     }
 }

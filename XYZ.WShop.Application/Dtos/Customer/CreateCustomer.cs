@@ -10,6 +10,7 @@ namespace XYZ.WShop.Application.Dtos.Customer
         public string PhoneNumber { get; set; }
         public string? Address { get; set; }
         public Guid BusinessId { get; set; }
+        public string[]? Tags { get; set; }
     }
 
     public class UpdateCustomer : CreateCustomer

@@ -6,6 +6,7 @@ namespace XYZ.WShop.Domain
     public class Order: IBaseEntity, IAuditableEntity, IDeletableEntity
     {
         public Guid Id { get; set; }
+        public Guid CustomerId { get; set; }
         public Guid BusinessId { get; set; }
         public string? CustomerName { get; set; }
         public string? CustomerEmail { get; set; }

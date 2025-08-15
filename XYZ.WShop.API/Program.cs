@@ -1,5 +1,6 @@
 
 using XYZ.WShop.API.Extensions;
+using XYZ.WShop.API.SeedData;
 using XYZ.WShop.Application.Extensions;
 using XZY.WShop.Infrastructure.Data;
 using XZY.WShop.Infrastructure.Extensions;
@@ -34,6 +35,8 @@ namespace XYZ.WShop.API
             builder.Services.AddHttpClient();
 
             var app = builder.Build();
+
+            DbInitializer.SeedData(app.Services, builder.Configuration);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())

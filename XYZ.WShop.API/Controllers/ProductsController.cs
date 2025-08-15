@@ -58,10 +58,50 @@ namespace XYZ.WShop.API.Controllers
 
         }
 
+        [HttpGet("export-pdf")]
+        public async Task<IActionResult> ExportToPdf(Guid businessId)
+        {
+            var pdfBytes = await _productService.ExportProductsToPdf(businessId);
+            return File(pdfBytes, "application/pdf", $"Products{DateTime.UtcNow.Ticks}.pdf");
+        }
+
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportToExcel(Guid businessId)
+        {
+            var excelBytes = await _productService.ExportProductsToExcel(businessId);
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Products.xlsx");
+        }
+
+        [HttpGet("export-pdf-qrcode")]
+        public async Task<IActionResult> ExportToPdfQRCode(Guid businessId)
+        {
+            var pdfBytes = await _productService.ExportProductsToPdfQRCode(businessId);
+            return File(pdfBytes, "application/pdf", $"Products{DateTime.UtcNow.Ticks}.pdf");
+        }
+
         [HttpDelete("delete/{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
             return Ok(await _productService.DeleteAsync(id));
+
+        }
+
+
+        [HttpPost("log-whatsapp-click")]
+        public async Task<IActionResult> LogWhatsAppClick([FromBody]OrderClickProduct orderClick)
+        {
+            var userAgent = Request.Headers["User-Agent"].ToString();
+            var clientIp = GetClientIp(HttpContext);
+            string deviceType;
+            if (userAgent.Contains("Android"))
+                deviceType = "Android";
+            else if (userAgent.Contains("iPhone") || userAgent.Contains("iPad"))
+                deviceType = "iOS";
+            else if (userAgent.Contains("Windows") || userAgent.Contains("Macintosh"))
+                deviceType = "Desktop";
+            else
+                deviceType = "Unknown";
+            return Ok(await _productService.LogOrderClick(orderClick, deviceType, clientIp));
 
         }
 

@@ -53,5 +53,19 @@ namespace XYZ.WShop.API.Controllers
         {
             return Ok(await _customerService.DeleteAsync(id));
         }
+
+        [HttpGet("export-pdf")]
+        public async Task<IActionResult> ExportToPdf(Guid businessId)
+        {
+            var pdfBytes = await _customerService.ExportCustomersToPdf(businessId);
+            return File(pdfBytes, "application/pdf", $"Products{DateTime.UtcNow.Ticks}.pdf");
+        }
+
+        [HttpGet("export-excel")]
+        public async Task<IActionResult> ExportToExcel(Guid businessId)
+        {
+            var excelBytes = await _customerService.ExportCustomersToExcel(businessId);
+            return File(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Products.xlsx");
+        }
     }
 }

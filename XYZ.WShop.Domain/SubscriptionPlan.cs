@@ -7,19 +7,13 @@ using XYZ.WShop.Domain.Interfaces;
 
 namespace XYZ.WShop.Domain
 {
-    public class Business : IBaseEntity, IAuditableEntity, IDeletableEntity
+    public class SubscriptionPlan: IBaseEntity, IAuditableEntity, IDeletableEntity
     {
         public Guid Id { get; set; }
-        public string Name { get; set; }
-        public string? Currency { get; set; }
+        public string? Name { get; set; }
+        public int NumberOfDays { get; set; }
+        public decimal Amount { get; set; }
         public string? Description { get; set; }
-        public string? Category { get; set; }
-        public string Slug { get; set; }
-        public string? Address { get; set; }
-        public string? Logo { get; set; }
-        public decimal WalletBalance { get; set; } = 0;
-        public string PhoneNumber { get; set; }
-        public string Email { get; set; }
         public Guid CreatedBy { get; set; }
         public Guid ModifiedBy { get; set; }
         public DateTime CreatedDate { get; set; }

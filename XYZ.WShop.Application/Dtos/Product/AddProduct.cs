@@ -13,6 +13,11 @@ namespace XYZ.WShop.Application.Dtos.Product
         public Guid BusinessId { get; set; }
     }
 
+    public class OrderClickProduct
+    {
+        public Guid Id { get; set; }
+    }
+
     public class UpdateProductRequest : AddProduct
     {
         public Guid Id { get; set; }

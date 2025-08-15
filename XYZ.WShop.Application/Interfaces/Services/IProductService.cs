@@ -3,6 +3,7 @@
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Helpers;
+using XYZ.WShop.Domain;
 
 namespace XYZ.WShop.Application.Interfaces.Services
 {
@@ -15,5 +16,10 @@ namespace XYZ.WShop.Application.Interfaces.Services
         Task<ResponseModel<ProductResponse>> GetByIdAsync(Guid id, string deviceType, string clientIp);
         Task<ResponseModel<ProductResponse>> DeleteAsync(Guid id);
         Task<ResponseModel<BusinessResponse>> GetAllBySlug(string deviceType, string clientIp,string businessName, int page, int pageSize, string? searchTerm);
+
+        Task<byte[]> ExportProductsToPdf(Guid businessId);
+        Task<byte[]> ExportProductsToExcel(Guid businessId);
+        Task<byte[]> ExportProductsToPdfQRCode(Guid businessId);
+        Task<bool> LogOrderClick(OrderClickProduct orderClick, string deviceType, string clientIp);
     }
 }
