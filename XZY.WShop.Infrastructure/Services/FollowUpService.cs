@@ -48,7 +48,6 @@ namespace XZY.WShop.Infrastructure.Services
                 var newCustomer = new Customer
                 {
                     Id = customerId,
-                    Address = "Not Provided",
                     FirstName = names[0],
                     LastName = names.Length > 1 ? names[1] : names[0],
                     PhoneNumber = request.CustomerPhone,
@@ -96,6 +95,14 @@ namespace XZY.WShop.Infrastructure.Services
             await _applicationDbContext.SaveChangesAsync();
 
             var result = _mapper.Map<FollowUpResponse>(followUp);
+            var customer = await _applicationDbContext.Customers.FirstOrDefaultAsync(c => c.Id == result.CustomerId);
+
+            if (customer != null)
+            {
+                result.CustomerName = $"{customer?.FirstName} {customer?.LastName}";
+                result.CustomerPhone = $"{customer?.PhoneNumber}";
+                result.CustomerEmail = $"{customer?.Email ?? "N/A"}";
+            }
             return ResponseModel<FollowUpResponse>.CreateResponse(
                 result,
                 string.Format(ApplicationContants.Messages.DeletedSuccessfully, "FollowUp"),
@@ -211,6 +218,15 @@ namespace XZY.WShop.Infrastructure.Services
             await _applicationDbContext.SaveChangesAsync();
 
             var result = _mapper.Map<FollowUpResponse>(followUp);
+
+            var customer = await _applicationDbContext.Customers.FirstOrDefaultAsync(c => c.Id == result.CustomerId);
+
+            if (customer != null)
+            {
+                result.CustomerName = $"{customer?.FirstName} {customer?.LastName}";
+                result.CustomerPhone = $"{customer?.PhoneNumber}";
+                result.CustomerEmail = $"{customer?.Email ?? "N/A"}";
+            }
 
             return ResponseModel<FollowUpResponse>.CreateResponse(
                result,
