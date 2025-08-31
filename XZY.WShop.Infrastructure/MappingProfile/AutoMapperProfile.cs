@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using XYZ.WShop.Application.Dtos.Customer;
 using XYZ.WShop.Application.Dtos.Expense;
+using XYZ.WShop.Application.Dtos.Followup;
 using XYZ.WShop.Application.Dtos.Notification;
 using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Product;
@@ -74,6 +75,10 @@ namespace XZY.WShop.Infrastructure.MappingProfile
             CreateMap<SubscriptionPlan, SubscriptionPlanRequest>().ReverseMap();
             CreateMap<SubscriptionPlanUpdateRequest, SubscriptionPlan>().ReverseMap();
             CreateMap<SubscriptionPlan, SubscriptionPlanResponse>().ReverseMap();
+
+            CreateMap<FollowUp, CreateFollowUpRequest>().ReverseMap();
+            CreateMap<UpdateFollowUpRequest, FollowUp>().ReverseMap();
+            CreateMap<FollowUp, FollowUpResponse>().ReverseMap();
         }
     }
 }

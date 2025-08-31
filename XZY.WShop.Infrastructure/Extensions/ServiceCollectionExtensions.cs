@@ -49,7 +49,8 @@ namespace XZY.WShop.Infrastructure.Extensions
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<ILinkAnalyticService, LinkAnalyticService>();
-
+            services.AddScoped<IFollowUpService, FollowUpService>();
+            services.AddScoped<IPushNotificationService, PushNotificationService>();
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 
 

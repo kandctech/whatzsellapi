@@ -35,12 +35,13 @@ namespace XYZ.WShop.API.Extensions
                                 ValidateIssuer = true,
                                 ValidateAudience = true,
                                 ValidateLifetime = true,
+                                RequireSignedTokens = true,
+                                TryAllIssuerSigningKeys = true,
                                 ValidateIssuerSigningKey = true,
                                 ValidIssuer = token.Issuer,
                                 ValidAudience = token.Audience,
                                 IssuerSigningKey = new SymmetricSecurityKey(secret),
                                 NameClaimType = ClaimTypes.NameIdentifier,
-                                RequireSignedTokens = true,
                                 RequireExpirationTime = true
                             };
                     });

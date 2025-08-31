@@ -97,6 +97,7 @@ namespace XZY.WShop.Infrastructure.Services
                 LastName = user.LastName,
                 UserName = user.Email,
                 Id = userId,
+                DeviceToken = user.DeviceToken,
                 Email = user.Email,
                 PhoneNumber = user.PhoneNumber,
                 BusinessId = businessId,

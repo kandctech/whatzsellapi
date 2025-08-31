@@ -1,9 +1,12 @@
 
+using Coravel;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using XYZ.WShop.API.Extensions;
 using XYZ.WShop.API.SeedData;
 using XYZ.WShop.Application.Extensions;
 using XZY.WShop.Infrastructure.Data;
 using XZY.WShop.Infrastructure.Extensions;
+using XZY.WShop.Infrastructure.Jobs;
 
 namespace XYZ.WShop.API
 {
@@ -28,6 +31,9 @@ namespace XYZ.WShop.API
             });
 
             // Add services to the container.
+            builder.Services.AddScheduler();
+            builder.Services.AddQueue();
+            builder.Services.AddTransient<FollowUpReminderJob>();
             builder.Services.AddInfrastructureServices<ApplicationDbContext>(builder.Configuration);
             builder.Services.ApiServices(builder.Configuration);
             builder.Services.AddApplicationServices();
@@ -53,11 +59,16 @@ namespace XYZ.WShop.API
 
             app.UseCors("AllowAllOrigins");
 
+            //app.UseRouting();
+            //app.UseGetCurrentLoginUser();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapHealthChecks("/api/health");
-            app.UseGetCurrentLoginUser();
             app.MapControllers();
+            //schedule background jobs with coravel
+            var provider = app.Services;
+            Schedule.ScheduleJobs(provider);
 
             app.Run();
         }

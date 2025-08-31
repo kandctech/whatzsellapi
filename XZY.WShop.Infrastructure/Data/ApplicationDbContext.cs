@@ -31,6 +31,7 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<EmailTemplate> EmailTemplates { get; set; }
         public DbSet<Audit> Audits { get; set; }
         public DbSet<SaleActivity> SaleActivities { get; set; }
+        public DbSet<FollowUp> FollowUps { get; set; }
 
     }
 }

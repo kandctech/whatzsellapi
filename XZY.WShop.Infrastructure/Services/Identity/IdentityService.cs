@@ -101,7 +101,17 @@ namespace XZY.WShop.Infrastructure.Services.Identity
             {
                 if (request?.DeviceToken != null)
                 {
-                    request.DeviceToken = request.DeviceToken;
+                    user.DeviceToken = request.DeviceToken;
+                }
+
+                _context.Update(user);
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (DBConcurrencyException ex)
+                {
+
                 }
 
                 profileModel = new UserProfileModel();

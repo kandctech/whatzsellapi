@@ -43,6 +43,7 @@ namespace XZY.WShop.Infrastructure.Helpers
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ValidateIssuer = false,
+                    TryAllIssuerSigningKeys = true,
                     ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
