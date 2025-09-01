@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Twilio.Rest;
 using XYZ.WShop.Application.Dtos.Customer;
 using XYZ.WShop.Application.Dtos.Expense;
 using XYZ.WShop.Application.Dtos.Followup;
@@ -12,6 +13,7 @@ using XYZ.WShop.Application.Dtos.Notification;
 using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Dtos.Subscription;
+using XYZ.WShop.Application.Dtos.Task;
 using XYZ.WShop.Domain;
 
 namespace XZY.WShop.Infrastructure.MappingProfile
@@ -79,6 +81,10 @@ namespace XZY.WShop.Infrastructure.MappingProfile
             CreateMap<FollowUp, CreateFollowUpRequest>().ReverseMap();
             CreateMap<UpdateFollowUpRequest, FollowUp>().ReverseMap();
             CreateMap<FollowUp, FollowUpResponse>().ReverseMap();
+
+            CreateMap<XYZ.WShop.Domain.TaskPlanner, CreateTaskRequest>().ReverseMap();
+            CreateMap<UpdateTaskRequest, XYZ.WShop.Domain.TaskPlanner>().ReverseMap();
+            CreateMap<XYZ.WShop.Domain.TaskPlanner, TaskRequestResponse>().ReverseMap();
         }
     }
 }

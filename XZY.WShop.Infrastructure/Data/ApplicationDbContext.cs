@@ -32,6 +32,8 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<Audit> Audits { get; set; }
         public DbSet<SaleActivity> SaleActivities { get; set; }
         public DbSet<FollowUp> FollowUps { get; set; }
+        public DbSet<XYZ.WShop.Domain.TaskPlanner> Tasks { get; set; }
+
 
     }
 }
