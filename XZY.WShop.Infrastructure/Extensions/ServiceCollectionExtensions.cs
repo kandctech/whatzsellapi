@@ -54,7 +54,7 @@ namespace XZY.WShop.Infrastructure.Extensions
             services.AddScoped<IPushNotificationService, PushNotificationService>();
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 
-
+            services.AddScoped<ITicketService, TicketService>();
 
             // Register Hosted services
             //services.AddHostedService<SMSHostedService>();

@@ -33,6 +33,8 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<SaleActivity> SaleActivities { get; set; }
         public DbSet<FollowUp> FollowUps { get; set; }
         public DbSet<XYZ.WShop.Domain.TaskPlanner> Tasks { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<Reply> Replies { get; set; }
 
 
     }

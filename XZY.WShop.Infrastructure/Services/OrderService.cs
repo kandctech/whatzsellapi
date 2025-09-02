@@ -70,10 +70,16 @@ namespace XZY.WShop.Infrastructure.Services
                         LastName = names.Length > 1 ? names[1] : names[0],
                         PhoneNumber = createOrder.CustomerPhoneNumber,
                         BusinessId = createOrder.BusinessId,
+                        LastOrderDate = DateTime.UtcNow,
                         
                     };
                     _context.Customers.Add(newCustomer);
 
+            }
+
+            if(existingCustomer != null)
+            {
+                existingCustomer.LastOrderDate = DateTime.UtcNow;   
             }
 
             var orderId = Guid.NewGuid();

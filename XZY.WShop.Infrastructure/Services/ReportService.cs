@@ -132,26 +132,30 @@ namespace XYZ.WShop.Infrastructure.Services
 
             return dashboardResponse;
         }
-        public async Task<ReportResponseDto> GetReportDataAsync(ReportRequestDto request)
+        public async Task<ReportResponseDto> GetReportDataAsync(Guid businessId, ReportRequestDto request)
         {
             return request.ReportType switch
             {
-                "sales" => await GetSalesReportAsync(request.TimeRange),
-                "inventory" => await GetInventoryReportAsync(),
-                "customers" => await GetCustomersReportAsync(),
+                "sales" => await GetSalesReportAsync(businessId, request.TimeRange),
+                "inventory" => await GetInventoryReportAsync(businessId),
+                "customers" => await GetCustomersReportAsync(businessId),
                 _ => throw new ArgumentException("Invalid report type")
             };
         }
 
-        private async Task<ReportResponseDto> GetSalesReportAsync(string timeRange)
+        private async Task<ReportResponseDto> GetSalesReportAsync(Guid businessId, string timeRange)
         {
             DateTime startDate, endDate = DateTime.UtcNow;
 
             if (timeRange == "week")
             {
-                startDate = endDate.AddDays(-7);
+                // Calculate start date for the current week (Monday)
+                int daysSinceMonday = (int)endDate.DayOfWeek - (int)DayOfWeek.Monday;
+                if (daysSinceMonday < 0) daysSinceMonday += 7; // Adjust for Sunday
+                startDate = endDate.AddDays(-daysSinceMonday).Date;
+
                 var dailySales = await _context.Orders
-                    .Where(o => o.CreatedDate >= startDate && o.CreatedDate <= endDate)
+                    .Where(o => o.BusinessId == businessId && o.CreatedDate >= startDate && o.CreatedDate <= endDate)
                     .GroupBy(o => o.CreatedDate.Date)
                     .Select(g => new { Date = g.Key, Total = g.Sum(o => o.Amount) })
                     .ToListAsync();
@@ -161,10 +165,14 @@ namespace XYZ.WShop.Infrastructure.Services
                     .ToArray();
 
                 var data = Enumerable.Range(0, 7)
-                    .Select(i => dailySales.FirstOrDefault(d => d.Date == startDate.AddDays(i))?.Total ?? 0)
-                    .ToArray();
+                   .Select(i => dailySales.FirstOrDefault(d =>
+                        d.Date.Date == startDate.AddDays(i).Date)?.Total ?? 0)
+                   .ToArray();
 
-                var previousPeriodTotal = await GetPreviousPeriodSalesTotal(startDate.AddDays(-7), startDate);
+                // Calculate previous week (Monday to Sunday)
+                DateTime previousWeekStart = startDate.AddDays(-7);
+                DateTime previousWeekEnd = startDate.AddDays(-1);
+                var previousPeriodTotal = await GetPreviousPeriodSalesTotal(businessId, previousWeekStart, previousWeekEnd);
                 var currentTotal = data.Sum();
                 var change = CalculatePercentageChange(previousPeriodTotal, currentTotal);
 
@@ -179,9 +187,9 @@ namespace XYZ.WShop.Infrastructure.Services
             }
             else // month
             {
-                startDate = new DateTime(endDate.Year, endDate.Month, 1);
+                startDate = new DateTime(endDate.Year, endDate.Month, 1).ToUniversalTime();
                 var weeklySales = await _context.Orders
-                    .Where(o => o.CreatedDate >= startDate && o.CreatedDate <= endDate)
+                    .Where(o => o.BusinessId == businessId && o.CreatedDate >= startDate && o.CreatedDate <= endDate)
                     .GroupBy(o => new { Week = (o.CreatedDate.Day - 1) / 7 + 1 })
                     .Select(g => new { Week = g.Key.Week, Total = g.Sum(o => o.Amount) })
                     .ToListAsync();
@@ -195,7 +203,7 @@ namespace XYZ.WShop.Infrastructure.Services
                     .Select(i => weeklySales.FirstOrDefault(w => w.Week == i)?.Total ?? 0)
                     .ToArray();
 
-                var previousPeriodTotal = await GetPreviousPeriodSalesTotal(startDate.AddMonths(-1), startDate);
+                var previousPeriodTotal = await GetPreviousPeriodSalesTotal(businessId, startDate.AddMonths(-1), startDate);
                 var currentTotal = data.Sum();
                 var change = CalculatePercentageChange(previousPeriodTotal, currentTotal);
 
@@ -210,9 +218,9 @@ namespace XYZ.WShop.Infrastructure.Services
             }
         }
 
-        private async Task<ReportResponseDto> GetInventoryReportAsync()
+        private async Task<ReportResponseDto> GetInventoryReportAsync(Guid businessId)
         {
-            var inventoryStatus = await _context.Products
+            var inventoryStatus = await _context.Products.Where(p=> p.BusinessId == businessId)
                 .GroupBy(p => p.QuantityInStock > 10 ? "In Stock" :
                              p.QuantityInStock > 0 ? "Low Stock" : "Out of Stock")
                 .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -236,10 +244,10 @@ namespace XYZ.WShop.Infrastructure.Services
             };
         }
 
-        private async Task<ReportResponseDto> GetCustomersReportAsync()
+        private async Task<ReportResponseDto> GetCustomersReportAsync(Guid businessId)
         {
             var thirtyDaysAgo = DateTime.UtcNow.AddDays(-30);
-            var customerStatus = await _context.Customers
+            var customerStatus = await _context.Customers.Where(c=> c.BusinessId == businessId) 
                 .GroupBy(c => c.LastOrderDate == null ? "Inactive" :
                              c.LastOrderDate >= thirtyDaysAgo ? "Returning" : "New")
                 .Select(g => new { Status = g.Key, Count = g.Count() })
@@ -263,10 +271,10 @@ namespace XYZ.WShop.Infrastructure.Services
             };
         }
 
-        private async Task<decimal> GetPreviousPeriodSalesTotal(DateTime startDate, DateTime endDate)
+        private async Task<decimal> GetPreviousPeriodSalesTotal(Guid businessId, DateTime startDate, DateTime endDate)
         {
             return await _context.Orders
-                .Where(o => o.CreatedDate >= startDate && o.CreatedDate < endDate)
+                .Where(o => o.BusinessId == businessId && o.CreatedDate >= startDate && o.CreatedDate < endDate)
                 .SumAsync(o => o.Amount);
         }
 

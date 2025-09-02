@@ -18,7 +18,7 @@ namespace XYZ.WShop.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetReport([FromQuery] string reportType = "sales", [FromQuery] string timeRange = "week")
+        public async Task<IActionResult> GetReport([FromQuery] Guid businessId, [FromQuery] string reportType = "sales", [FromQuery] string timeRange = "week")
         {
             var request = new ReportRequestDto
             {
@@ -26,7 +26,7 @@ namespace XYZ.WShop.API.Controllers
                 TimeRange = timeRange
             };
 
-            var result = await _reportService.GetReportDataAsync(request);
+            var result = await _reportService.GetReportDataAsync(businessId, request);
             return Ok(result);
         }
 

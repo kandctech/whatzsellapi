@@ -14,6 +14,7 @@ using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Dtos.Subscription;
 using XYZ.WShop.Application.Dtos.Task;
+using XYZ.WShop.Application.Dtos.Ticket;
 using XYZ.WShop.Domain;
 
 namespace XZY.WShop.Infrastructure.MappingProfile
@@ -85,6 +86,12 @@ namespace XZY.WShop.Infrastructure.MappingProfile
             CreateMap<XYZ.WShop.Domain.TaskPlanner, CreateTaskRequest>().ReverseMap();
             CreateMap<UpdateTaskRequest, XYZ.WShop.Domain.TaskPlanner>().ReverseMap();
             CreateMap<XYZ.WShop.Domain.TaskPlanner, TaskRequestResponse>().ReverseMap();
+
+            CreateMap<Ticket, CreateTicketDto>().ReverseMap();
+            CreateMap<Ticket, TicketDto>().ReverseMap();
+
+            CreateMap<Reply, CreateReplyDto>().ReverseMap();
+            CreateMap<Reply, ReplyDto>().ReverseMap();
         }
     }
 }
