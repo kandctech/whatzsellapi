@@ -13,6 +13,13 @@ namespace XYZ.WShop.Domain.Enums
         Debit
     }
 
+    public enum PaymentStatus
+    {
+        Paid,
+        Pending,
+        Expired
+    }
+
     public enum PayType
     {
         None,

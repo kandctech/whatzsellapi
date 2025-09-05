@@ -18,6 +18,7 @@ namespace XZY.WShop.Infrastructure.Data
         {
         }
 
+        public static int AmountPerDay => 50;
         public DbSet<Business> Busineses { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }

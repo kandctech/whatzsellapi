@@ -28,5 +28,6 @@ namespace XYZ.WShop.Application.Dtos.Dashboard
         public decimal BestSellerRevenuePercentage { get; set; }
         
         public int? BestSelleingPrPercentageRevenueContribtn { get; set; }
+        public string? BestSellingProductUrl { get; set; }
     }
 }

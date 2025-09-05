@@ -8,6 +8,10 @@ namespace XYZ.WShop.Application.Constants
         public const string SupportNumber = "support@wshop.com";
         public const string AppName = "WShop";
 
+        public static object SupportEmail { get; set; }
+        public static string CallbackUrl { get; set; } = "https://wakawithus.com";
+        public static double TrialDay { get; set; } = 14;
+
         public static class Messages
         {
             public static readonly string SuccessRetrieval = "{0} retrieved successfully.";

@@ -13,9 +13,11 @@ namespace XYZ.WShop.Domain
         public Guid Id { get; set; }
         public Guid BusinessId { get; set; }
         public string? Narration { get; set; }
-        public Guid Reference { get; set; }
+        public string Reference { get; set; }
         public decimal Amount { get; set; }
+        public int DaysPayFor { get; set; }
         public PaymentType PaymentType { get; set; }
+        public PaymentStatus Status { get; set; }
         public Guid CreatedBy { get; set; }
         public Guid ModifiedBy { get; set; }
         public DateTime CreatedDate { get; set; }

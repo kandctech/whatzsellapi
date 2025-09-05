@@ -13,6 +13,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Twilio.Exceptions;
+using XYZ.WShop.Application.Constants;
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.User;
 using XYZ.WShop.Application.Interfaces.Services.Identity;
@@ -119,6 +120,9 @@ namespace XZY.WShop.Infrastructure.Services.Identity
                 var business = await _context.Busineses
                     .FirstOrDefaultAsync(b=> b.Id == user.BusinessId);
 
+                var subscription = await _context.Subscriptions
+                .FirstOrDefaultAsync(b => b.BusinessId == user.BusinessId);
+
                 var jwtToken = TokenHelper.GenerateJwtToken(user, _config);
                 profileModel.Token = jwtToken;
                 profileModel.Email = user.Email;
@@ -134,6 +138,8 @@ namespace XZY.WShop.Infrastructure.Services.Identity
                 profileModel.BusinessCategory = business.Category;
                 profileModel.BusinessDescription = business.Description;
                 profileModel.Logo = business.Logo;
+                profileModel.LastPaymentDate = subscription.ModifiedDate;
+                profileModel.NextPaymentDate = subscription.EndDate;
                 profileModel.ProfileImageUrl = user?.ProfileImageUrl;
                 profileModel.Id = Guid.Parse(user.Id);
 

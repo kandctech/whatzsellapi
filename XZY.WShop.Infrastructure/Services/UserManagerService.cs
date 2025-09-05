@@ -109,6 +109,21 @@ namespace XZY.WShop.Infrastructure.Services
             var result = await _userManager.CreateAsync(business!, user.Password);
             var profileModel = new UserProfileModel();
 
+            Subscription subscription = new Subscription
+            {
+                BusinessId = businessId,
+                IsActive = true,
+                StartDate = DateTime.UtcNow,
+                EndDate = DateTime.UtcNow.AddDays(ApplicationContants.TrialDay),
+                CreatedDate = DateTime.UtcNow,
+                Email = business.Email,
+                ModifiedDate = DateTime.UtcNow,
+                FullName = $"{user.FirstName} {user.LastName}" ,
+            };
+
+            await _applicationDbContext.Subscriptions.AddAsync(subscription);
+            await _applicationDbContext.SaveChangesAsync();
+
             var jwtToken = TokenHelper.GenerateJwtToken(business, _config);
             profileModel.Token = jwtToken;
             profileModel.Email = user.Email;
@@ -120,6 +135,8 @@ namespace XZY.WShop.Infrastructure.Services
             profileModel.BusinessId = businessId;
             profileModel.BusinessAddress = user.BusinessAddress;
             profileModel.PhoneNumber = user.PhoneNumber;
+            profileModel.LastPaymentDate = subscription.ModifiedDate;
+            profileModel.NextPaymentDate = subscription.EndDate;
             profileModel.Role = "Admin";
 
             var resp = ResponseModel<UserProfileModel>.CreateResponse(profileModel, string.Format(ApplicationContants.Messages.CreatedSuccessfulMessage, "Admin"), true);

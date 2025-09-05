@@ -112,11 +112,15 @@ namespace XYZ.WShop.Infrastructure.Services
             // Get total revenue for the month
             var totalMonthlyRevenue = productSales.Sum(x => x.TotalSales);
 
+
+
             // Get best selling product if any exists
             if (productSales.Any())
             {
+                var product = await _context.Products.FirstOrDefaultAsync(p=> p.Id == productSales.First().ProductId);
                 var bestSeller = productSales.First();
                 dashboardResponse.BestSellingProductName = bestSeller.ProductName;
+                dashboardResponse.BestSellingProductUrl = product?.ImageUrls?.Split(",")[0];
                 dashboardResponse.BestSellerQuantityThisMonth = bestSeller.TotalQuantity;
                 dashboardResponse.BestSellerRevenueThisMonth = bestSeller.TotalSales;
                 dashboardResponse.BestSellerRevenuePercentage =

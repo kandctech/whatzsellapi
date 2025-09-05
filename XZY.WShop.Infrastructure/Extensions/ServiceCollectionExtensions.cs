@@ -52,6 +52,8 @@ namespace XZY.WShop.Infrastructure.Extensions
             services.AddScoped<IFollowUpService, FollowUpService>();
             services.AddScoped<ITaskService, TaskService>();
             services.AddScoped<IPushNotificationService, PushNotificationService>();
+            services.AddScoped<IPaystackService, PaystackService>();
+            services.AddScoped<ITransactionService, TransactionService>();
             services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
 
             services.AddScoped<ITicketService, TicketService>();

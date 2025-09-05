@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using XYZ.WShop.API.CustomAttributes;
 using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Interfaces.Services;
 
@@ -45,6 +46,7 @@ namespace XYZ.WShop.API.Controllers
         }
 
         [HttpPost("add")]
+        //[SubscriptionRequired]
         public async Task<IActionResult> Post(AddProduct addProduct)
         {
             return Ok(await _productService.AddAsync(addProduct));
