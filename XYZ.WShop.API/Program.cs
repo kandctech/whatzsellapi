@@ -64,7 +64,7 @@ namespace XYZ.WShop.API
 
             var app = builder.Build();
 
-            DbInitializer.SeedData(app.Services, builder.Configuration);
+            //DbInitializer.SeedData(app.Services, builder.Configuration);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
