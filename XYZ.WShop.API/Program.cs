@@ -9,6 +9,7 @@ using XZY.WShop.Infrastructure.Data;
 using XZY.WShop.Infrastructure.Extensions;
 using XZY.WShop.Infrastructure.Jobs;
 using Polly;
+using Microsoft.EntityFrameworkCore;
 
 namespace XYZ.WShop.API
 {
@@ -64,15 +65,34 @@ namespace XYZ.WShop.API
 
             var app = builder.Build();
 
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                // Check for pending migrations
+                var pendingMigrations = dbContext.Database.GetPendingMigrations();
+                if (pendingMigrations.Any())
+                {
+                    Console.WriteLine("Applying pending migrations...");
+                    dbContext.Database.Migrate(); // Applies all pending migrations
+                    Console.WriteLine("Migrations applied successfully.");
+                }
+                else
+                {
+                    Console.WriteLine("No pending migrations found.");
+                }
+            }
+
             //DbInitializer.SeedData(app.Services, builder.Configuration);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI();
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             //  app.InitialiseDb().Wait();
             // app.SeedData();
