@@ -137,7 +137,7 @@ namespace XZY.WShop.Infrastructure.Services
 
             if (existingTask == null)
             {
-                throw new EntityNotFoundException($"Expense with ID {task.Id} not found");
+                throw new EntityNotFoundException($"Task with ID {task.Id} not found");
             }
 
             _mapper.Map(task, existingTask);

@@ -36,7 +36,9 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<XYZ.WShop.Domain.TaskPlanner> Tasks { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<Reply> Replies { get; set; }
-
-
+        public DbSet<CreditorRecord> CreditorRecords { get; set; }
+        public DbSet<CreditorPayment> CreditorPayments { get; set; }
+        public DbSet<DebtorRecord> DebtorRecords { get; set; }
+        public DbSet<DebtorPayment> DebtorPayments { get; set; }
     }
 }

@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Twilio.Rest;
+using XYZ.WShop.Application.Dtos.Creditor;
 using XYZ.WShop.Application.Dtos.Customer;
+using XYZ.WShop.Application.Dtos.Debtor;
 using XYZ.WShop.Application.Dtos.Expense;
 using XYZ.WShop.Application.Dtos.Followup;
 using XYZ.WShop.Application.Dtos.Notification;
@@ -92,6 +94,14 @@ namespace XZY.WShop.Infrastructure.MappingProfile
 
             CreateMap<Reply, CreateReplyDto>().ReverseMap();
             CreateMap<Reply, ReplyDto>().ReverseMap();
+
+            CreateMap<CreditorRecord, CreateCreditRequest>().ReverseMap();
+            CreateMap<UpdateCreditRequest, CreditorRecord>().ReverseMap();
+            CreateMap<CreditorRecord, CreditorResponse>().ReverseMap();
+
+            CreateMap<DebtorRecord, CreateDebtRequest>().ReverseMap();
+            CreateMap<UpdateDebtRequest, DebtorRecord>().ReverseMap();
+            CreateMap<DebtorRecord, DebtorResponse>().ReverseMap();
         }
     }
 }

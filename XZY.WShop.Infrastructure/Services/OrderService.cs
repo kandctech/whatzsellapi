@@ -90,7 +90,7 @@ namespace XZY.WShop.Infrastructure.Services
 
             var count = await _context.Orders.Where(o=> o.BusinessId == order.BusinessId).CountAsync();
 
-            order.OrderNumber = count.ToString("D6");
+            order.OrderNumber = count.ToString("D6");    
 
             await _context.SaveChangesAsync();
 
@@ -597,7 +597,14 @@ namespace XZY.WShop.Infrastructure.Services
                     {
                         throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
                     }
-                    // Add additional validation logic here if needed
+
+                    if(product.QuantityInStock < item.Qty)
+                    {
+                    throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing this order.");
+                    }
+
+                    product.QuantityInStock -= item.Qty;
+                   
                 }
             }
         }
