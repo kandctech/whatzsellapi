@@ -600,7 +600,7 @@ namespace XZY.WShop.Infrastructure.Services
 
                     if(product.QuantityInStock < item.Qty)
                     {
-                    throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing this order.");
+                    throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing creating this sale.");
                     }
 
                     product.QuantityInStock -= item.Qty;

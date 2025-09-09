@@ -35,8 +35,6 @@ namespace XYZ.WShop.API.Controllers
         [HttpPost("initialise")]
         public async Task<IActionResult> InitializePayment([FromBody] TransactionDto request)
         {
-            try
-            {
                 var result = await _transactionService.CreateTransaction(request);
                 var initializeRequest = new InitializeTransactionRequest
                 {
@@ -47,23 +45,13 @@ namespace XYZ.WShop.API.Controllers
                     Currency = request?.Currency
                 };
 
-                var response = await _paystackService.InitializeTransactionAsync(initializeRequest);
+              //  var response = await _paystackService.InitializeTransactionAsync(initializeRequest);
 
-                if (response.Status)
-                {
                     return Ok(new
                     {
-                        authorizationUrl = response.Data.AuthorizationUrl,
-                        reference = response.Data.Reference
+                        reference = result.Data
                     });
-                }
-
-                return BadRequest(new { message = response.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+           
         }
 
     [HttpPut]

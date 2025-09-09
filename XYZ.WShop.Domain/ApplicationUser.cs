@@ -10,7 +10,7 @@ namespace XYZ.WShop.Domain
 
         public string? Role { get; set; }
         public Guid BusinessId { get; set; }
-        public string DeviceToken { get; set; }
+        public string? DeviceToken { get; set; }
 
 
         public DateTime? PasswordResetCodeExpiryDate { get; set; }

@@ -545,6 +545,46 @@ namespace XZY.WShop.Infrastructure.Services
 
             return ResponseModel<UserProfileModel>.CreateResponse(useModel, "User updated", true);
         }
+
+        public async Task<ResponseModel<UserProfileModel>> ChangePasswordLoginUser(ChangePasswordRequest model)
+        {
+            if (model.NewPassword != model.ConfirmPassword)
+            {
+                throw new BadRequestException("New password and confirm pasword MUST match.");
+            }
+
+            var userToChange = await _applicationDbContext.Users.FirstOrDefaultAsync(u => u.Id == model.UserId) ?? throw new BadRequestException("Account not found.");
+
+            var passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(userToChange);
+
+            await _userManager.ResetPasswordAsync(userToChange, passwordResetToken, model.NewPassword);
+
+            userToChange.PasswordResetCode = null;
+            userToChange.PasswordResetCodeExpiryDate = null;
+
+            _applicationDbContext.Entry(userToChange).State = EntityState.Modified;
+
+            await _applicationDbContext.SaveChangesAsync();
+
+
+            UserProfileModel profileModel = new UserProfileModel();
+            var business = await _applicationDbContext.Busineses.FirstOrDefaultAsync();
+
+            var jwtToken = TokenHelper.GenerateJwtToken(userToChange, _config);
+
+            profileModel.Token = jwtToken;
+            profileModel.Email = userToChange.Email;
+            profileModel.FirstName = userToChange.FirstName;
+            profileModel.LastName = userToChange.LastName;
+            profileModel.BusinessName = business.Currency;
+            profileModel.BusinessName = business.Name;
+            profileModel.BusinessId = business.Id;
+            profileModel.BusinessAddress = business.Address;
+            profileModel.PhoneNumber = userToChange.PhoneNumber;
+
+
+            return ResponseModel<UserProfileModel>.CreateResponse(profileModel, "Success", true);
+        }
         #endregion
     }
 }

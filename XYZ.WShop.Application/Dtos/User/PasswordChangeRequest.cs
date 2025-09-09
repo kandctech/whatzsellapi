@@ -14,4 +14,16 @@ namespace XYZ.WShop.Application.Dtos.User
         [Required]
         public string Email { get; set; }
     }
+
+    public class ChangePasswordRequest
+    {
+        [Required]
+        public string ConfirmPassword { get; set; }
+        [Required]
+        public string NewPassword { get; set; }
+        [Required]
+        public string CurrentPassword { get; set; }
+        [Required]
+        public string UserId { get; set; }
+    }
 }

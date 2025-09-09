@@ -38,5 +38,6 @@ namespace XYZ.WShop.Application.Interfaces.Services
         Task<ResponseModel<UserProfileModel>> UpdateUser(EditUserRequest model);
         Task<ResponseModel<bool>> DeleteUser(string userId);
         Task<ResponseModel<UserProfileModel>> UpdateBusiness(EditBusinessRequest editBusiness);
+        Task<ResponseModel<UserProfileModel>> ChangePasswordLoginUser(ChangePasswordRequest model);
     }
 }

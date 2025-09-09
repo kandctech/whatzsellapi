@@ -8,7 +8,7 @@ using XYZ.WShop.Application.User;
 
 namespace XYZ.WShop.API.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/v{version:apiVersion}/accounts")]
     public class AccountController : BaseController
     {
@@ -76,6 +76,15 @@ ILogger<AuthsController> logger)
         public async Task<IActionResult> UpdateProfileAsync(EditBusinessRequest editBusiness)
         {
             return Ok(await _userManagerService.UpdateBusiness(editBusiness));
+        }
+
+        [HttpPut]
+        [Route("change-password")]
+        public async Task<ActionResult<ResponseModel<UserProfileModel>>> ChangePassword(ChangePasswordRequest request)
+        {
+            var result = await _userManagerService.ChangePasswordLoginUser(request);
+            return Ok(result);
+
         }
 
     }
