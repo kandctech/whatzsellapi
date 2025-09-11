@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using XYZ.WShop.Application.Constants;
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Debtor;
+using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Interfaces.Services;
@@ -24,6 +25,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<DebtorResponse>> CreateDebtorAsync(CreateDebtRequest debt)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(debt.BusinessId, _context);
+
             var debtor = _mapper.Map<DebtorRecord>(debt);
             debtor.CreatedDate = DateTime.UtcNow;
             debtor.RecordDate = debt.Date;
@@ -183,6 +187,7 @@ namespace XZY.WShop.Infrastructure.Services
 
             var paymentEntity = _mapper.Map<DebtorPayment>(payment);
             paymentEntity.Date = DateTime.UtcNow;
+            paymentEntity.BusinessId = debtor.BusinessId;
 
             debtor.Payments.Add(paymentEntity);
 

@@ -16,6 +16,7 @@ using XYZ.WShop.Application.Interfaces.Services;
 using XYZ.WShop.Domain;
 using XZY.WShop.Infrastructure.Data;
 using DocumentFormat.OpenXml.Spreadsheet;
+using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
 {
@@ -32,6 +33,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<ExpenseResponse>> AddAsync(AddExpense addExpense)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(addExpense.BusinessId, _context);
+
             var expense = _mapper.Map<Expense>(addExpense);
             expense.CreatedDate = DateTime.UtcNow;
             expense.CreatedBy = addExpense.UserId;

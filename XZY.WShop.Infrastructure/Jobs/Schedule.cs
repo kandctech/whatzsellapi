@@ -9,9 +9,9 @@ namespace XZY.WShop.Infrastructure.Jobs
             provider.UseScheduler(scheduler =>
             {
 
-               scheduler.Schedule<FollowUpReminderJob>()
-              .EveryMinute()
-              .PreventOverlapping("FollowUpReminderJob");
+             scheduler.Schedule<FollowUpReminderJob>()
+             .EveryMinute()
+             .PreventOverlapping("FollowUpReminderJob");
 
              scheduler.Schedule<SubscriptionJob>()
             .EveryMinute()
@@ -20,6 +20,10 @@ namespace XZY.WShop.Infrastructure.Jobs
             scheduler.Schedule<SubscriptionExpriarionReminderJob>()
            .Daily()
            .PreventOverlapping("SubscriptionExpriarionReminderJob");
+
+           scheduler.Schedule<DeleteOrphanRecordsJob>()
+          .DailyAtHour(23)
+          .PreventOverlapping("DeleteOrphanRecordsJob");
 
             });
         }

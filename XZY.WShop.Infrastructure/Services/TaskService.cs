@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using XYZ.WShop.Application.Constants;
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Expense;
+using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Dtos.Task;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
@@ -30,6 +31,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<TaskRequestResponse>> AddTaskAsync(CreateTaskRequest task)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(task.BusinessId, _applicationDbContext);
+
             var taskPlanner = _mapper.Map<TaskPlanner>(task);
             taskPlanner.CreatedDate = DateTime.UtcNow;
 

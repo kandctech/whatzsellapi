@@ -46,7 +46,6 @@ namespace XYZ.WShop.API.Controllers
         }
 
         [HttpPost("add")]
-        //[SubscriptionRequired]
         public async Task<IActionResult> Post(AddProduct addProduct)
         {
             return Ok(await _productService.AddAsync(addProduct));

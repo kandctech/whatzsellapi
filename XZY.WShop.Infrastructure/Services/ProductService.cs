@@ -37,6 +37,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<ProductResponse>> AddAsync(AddProduct addProduct)
         {
+            var helper = new SubscriptionHelper();
+            await  helper.ValidateSubscriptionAsync(addProduct.BusinessId, _applicationDbContext);
+
             var product = _mapper.Map<Product>(addProduct);
             await _applicationDbContext.Products.AddAsync(product);
             await _applicationDbContext.SaveChangesAsync();
@@ -69,6 +72,9 @@ namespace XZY.WShop.Infrastructure.Services
             {
                 throw new EntityNotFoundException($"Business not found");
             }
+
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync( busness.Id, _applicationDbContext);
 
             var query = _applicationDbContext
                 .Products
@@ -170,6 +176,9 @@ namespace XZY.WShop.Infrastructure.Services
                 throw new EntityNotFoundException($"Product not found");
             }
 
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(product.BusinessId, _applicationDbContext);
+
             var result = _mapper.Map<ProductResponse>(product);
 
             var business = await _applicationDbContext.Busineses.FirstOrDefaultAsync(p => p.Id == product.BusinessId);
@@ -202,6 +211,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<ProductResponse>> UpdateAsync(UpdateProductRequest updateProduct)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(updateProduct.BusinessId, _applicationDbContext);
+
             var existingProduct = await _applicationDbContext.Products.FirstOrDefaultAsync(p => p.Id == updateProduct.Id);
 
             if (existingProduct == null)
@@ -404,6 +416,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<byte[]> ExportProductsToPdfQRCode(Guid businessId)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(businessId, _applicationDbContext);
+
             var products = await _applicationDbContext.Products
                .Where(p => p.BusinessId == businessId)
                .ToListAsync();

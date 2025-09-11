@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using XYZ.WShop.Application.Constants;
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Creditor;
+using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Interfaces.Services;
@@ -24,6 +25,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<CreditorResponse>> CreateCreditAsync(CreateCreditRequest credit)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(credit.BusinessId, _context);
+
             var creditor = _mapper.Map<CreditorRecord>(credit);
             creditor.CreatedDate = DateTime.UtcNow;
             creditor.RecordDate = credit.Date;
@@ -182,6 +186,7 @@ namespace XZY.WShop.Infrastructure.Services
 
             var paymentEntity = _mapper.Map<CreditorPayment>(payment);
             paymentEntity.Date = DateTime.UtcNow;
+            paymentEntity.BusinessId = creditor.BusinessId;
 
             creditor.Payments.Add(paymentEntity);
 

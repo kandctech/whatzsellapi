@@ -11,6 +11,7 @@ using XYZ.WShop.Application.Interfaces.Services;
 using XYZ.WShop.Domain;
 using XZY.WShop.Infrastructure.Data;
 using OfficeOpenXml;
+using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
 {
@@ -27,6 +28,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<CustomerResponse>> AddAsync(CreateCustomer createCustomer)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(createCustomer.BusinessId, _applicationDbContext);
+
             var customer = _mapper.Map<Customer>(createCustomer);
             customer.CreatedDate = DateTime.UtcNow;
 

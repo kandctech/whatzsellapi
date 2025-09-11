@@ -12,6 +12,7 @@ using iTextSharp.text.pdf.draw;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using OfficeOpenXml;
+using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
     {
@@ -33,8 +34,10 @@ namespace XZY.WShop.Infrastructure.Services
 
             public async Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder)
             {
-                // Validate products exist and have sufficient stock
-                await ValidateOrderItems(createOrder.OrderItems);
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(createOrder.BusinessId, _context);
+            // Validate products exist and have sufficient stock
+            await ValidateOrderItems(createOrder.OrderItems);
 
                 var order = _mapper.Map<Order>(createOrder);
                 order.CreatedDate = DateTime.UtcNow;

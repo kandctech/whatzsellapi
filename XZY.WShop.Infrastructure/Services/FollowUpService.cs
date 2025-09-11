@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using XYZ.WShop.Application.Constants;
 using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Followup;
+using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Interfaces.Services;
@@ -25,6 +26,9 @@ namespace XZY.WShop.Infrastructure.Services
 
         public async Task<ResponseModel<FollowUpResponse>> CreateFollowUpAsync(Guid userId, CreateFollowUpRequest request)
         {
+            var helper = new SubscriptionHelper();
+            await helper.ValidateSubscriptionAsync(request.BusinessId, _applicationDbContext);
+
             string last10;
 
             // Check if string is at least 10 characters long

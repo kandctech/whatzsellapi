@@ -9,6 +9,7 @@ namespace XYZ.WShop.Domain
     public class CreditorPayment
     {
         public Guid Id { get; set; }
+        public Guid BusinessId { get; set; }
         public Guid CreditorRecordId { get; set; }
         public DateTime Date { get; set; }
         public decimal Amount { get; set; }
