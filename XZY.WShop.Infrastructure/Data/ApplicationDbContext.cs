@@ -40,5 +40,6 @@ namespace XZY.WShop.Infrastructure.Data
         public DbSet<CreditorPayment> CreditorPayments { get; set; }
         public DbSet<DebtorRecord> DebtorRecords { get; set; }
         public DbSet<DebtorPayment> DebtorPayments { get; set; }
+        public DbSet<FeedBack> FeedBacks { get; set; }
     }
 }
