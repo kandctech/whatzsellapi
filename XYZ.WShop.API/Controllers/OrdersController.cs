@@ -45,6 +45,12 @@ namespace XYZ.WShop.API.Controllers
             return Ok(await _orderService.AddAsync(createOrder));
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(Guid id,  [FromBody] UpdateOrder updateOrder)
+        {
+            return Ok(await _orderService.UpdateAsync(id, updateOrder));
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteOrder(Guid id)
         {

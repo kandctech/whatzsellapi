@@ -196,6 +196,20 @@ namespace XZY.WShop.Infrastructure.Services
             debtor.Status = totalPaid >= debtor.Amount ? "paid" : "unpaid";
             debtor.ModifiedDate = DateTime.UtcNow;
 
+            if (debtor.OrderId != null)
+            {
+                var order = await _context.Orders.FirstAsync(o=> o.Id == debtor.OrderId);
+                if (order != null)
+                {
+                    order.PaymentStatus = debtor.Status;
+
+                    if (debtor != null && debtor.Status.ToLower() == "paid")
+                    {
+                        order.Status = XYZ.WShop.Domain.Enums.OrderStatus.Paid;
+                    } 
+                }
+            }
+
             _context.DebtorRecords.Update(debtor);
             await _context.SaveChangesAsync();
 

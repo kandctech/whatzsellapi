@@ -58,6 +58,10 @@ namespace XZY.WShop.Infrastructure.MappingProfile
 
 
             CreateMap<Order, CreateOrder>().ReverseMap();
+            CreateMap<UpdateOrder, Order>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore()) 
+                .ForMember(dest => dest.CreatedDate, opt => opt.Ignore()) 
+                .ForMember(dest => dest.BusinessId, opt => opt.Ignore()); 
             CreateMap<Order, OrderResponse>().ReverseMap();
 
             CreateMap<OrderItem, OrderItemDto>()

@@ -16,8 +16,16 @@ namespace XYZ.WShop.Application.Dtos.Orders
         public decimal Amount { get; set; }
         public DateTime PaymentDate { get; set; }
         public string? PaymentMethod { get; set; }
+        public string? PaymentStatus { get; set; }
+        public decimal PaidAmount { get; set; }
         public string? Note { get; set; }
+        public bool CreateDebtRecord { get; set; } = false;
         public List<OrderItemDto> OrderItems { get; set; }
+    }
+
+    public class UpdateOrder : CreateOrder
+    {
+        public Guid Id { get; set; }
     }
 
     public class OrderItemDto
@@ -30,6 +38,9 @@ namespace XYZ.WShop.Application.Dtos.Orders
 
     public class OrderResponse: CreateOrder
     {
+        public Guid CustomerId { get; set; }
+        public string? PaymentStatus { get; set; }
+        public decimal PaidAmount { get; set; }
         public Guid Id { get; set; }
         public string? OrderNumber { get; set; }
         public DateTime CreatedDate { get; set; }
