@@ -105,7 +105,7 @@ namespace XZY.WShop.Infrastructure.Services
                 {
                     Id = debtRecordId,
                     Address = createOrder.CustomerAddress,
-                    Amount = createOrder.Amount - createOrder.PaidAmount,
+                    Amount = createOrder.Amount,
                     BusinessId = createOrder.BusinessId,
                     CreatedDate = DateTime.UtcNow,
                     DueDate = DateTime.UtcNow,
