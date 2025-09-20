@@ -20,6 +20,8 @@ namespace XYZ.WShop.Domain
         public DateTime PaymentDate { get; set; }
         public string? PaymentMethod { get; set; }
         public DateTime CancelDate { get; set; }
+        public string? PaymentStatus { get; set; }
+        public decimal PaidAmount { get; set; }
 
         public OrderStatus Status { get; set; }
         public Guid CreatedBy { get; set; }

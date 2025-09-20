@@ -7,6 +7,7 @@ namespace XYZ.WShop.Application.Interfaces.Services
     public interface IOrderService
     {
         Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder);
+        Task<ResponseModel<OrderResponse>> UpdateAsync(Guid orderId, UpdateOrder updateOrder);
         Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id);
         Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
             Guid businessId,

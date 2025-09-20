@@ -10,6 +10,7 @@ namespace XYZ.WShop.Domain
         public string? PhoneNumber { get; set; }
         public string? Email { get; set; }
         public string? Address { get; set; }
+        public Guid? OrderId { get; set; }
         public string Purpose { get; set; }
         public decimal Amount { get; set; }
         public DateTime DueDate { get; set; }

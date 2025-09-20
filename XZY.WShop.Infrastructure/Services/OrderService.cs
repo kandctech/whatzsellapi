@@ -1,48 +1,49 @@
 ﻿using AutoMapper;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using iTextSharp.text.pdf.draw;
-using Microsoft.EntityFrameworkCore;
-using OfficeOpenXml;
 using XYZ.WShop.Application.Constants;
-using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Dtos.Orders;
+using XYZ.WShop.Application.Dtos;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Interfaces.Services;
 using XYZ.WShop.Domain;
 using XZY.WShop.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using iTextSharp.text.pdf.draw;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
+using OfficeOpenXml;
+using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
-{
-    public class OrderService : IOrderService
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
-        private readonly IProductService _productService;
-
-        public OrderService(
-            ApplicationDbContext context,
-            IMapper mapper,
-            IProductService productService)
+        public class OrderService : IOrderService
         {
-            _context = context;
-            _mapper = mapper;
-            _productService = productService;
-        }
+            private readonly ApplicationDbContext _context;
+            private readonly IMapper _mapper;
+            private readonly IProductService _productService;
 
-        public async Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder)
-        {
+            public OrderService(
+                ApplicationDbContext context,
+                IMapper mapper,
+                IProductService productService)
+            {
+                _context = context;
+                _mapper = mapper;
+                _productService = productService;
+            }
+
+            public async Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder)
+            {
             var helper = new SubscriptionHelper();
             await helper.ValidateSubscriptionAsync(createOrder.BusinessId, _context);
             // Validate products exist and have sufficient stock
             await ValidateOrderItems(createOrder.OrderItems);
 
-            var order = _mapper.Map<Order>(createOrder);
-            order.CreatedDate = DateTime.UtcNow;
+                var order = _mapper.Map<Order>(createOrder);
+                order.CreatedDate = DateTime.UtcNow;
 
-            // Calculate total amount
-            order.Amount = createOrder.OrderItems.Sum(item => item.Price * item.Qty);
+                // Calculate total amount
+                order.Amount = createOrder.OrderItems.Sum(item => item.Price * item.Qty);
 
             string last10;
 
@@ -53,90 +54,150 @@ namespace XZY.WShop.Infrastructure.Services
             }
             else
             {
-                last10 = order.CustomerPhoneNumber;
+                last10 = order.CustomerPhoneNumber; 
             }
 
-            var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.PhoneNumber.Contains(last10) && c.BusinessId == createOrder.BusinessId);
+            var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c=> c.PhoneNumber.Contains(last10) && c.BusinessId == createOrder.BusinessId);
 
 
             var customerId = Guid.NewGuid();
 
             if (existingCustomer == null)
             {
-                var names = createOrder.CustomerName.Split(new char[] { ' ', ',', ';' });
-                var newCustomer = new Customer
-                {
-                    Id = customerId,
-                    Address = createOrder.CustomerAddress,
-                    FirstName = names[0],
-                    LastName = names.Length > 1 ? names[1] : names[0],
-                    PhoneNumber = createOrder.CustomerPhoneNumber,
-                    BusinessId = createOrder.BusinessId,
-                    LastOrderDate = DateTime.UtcNow,
-
-                };
-                _context.Customers.Add(newCustomer);
+                var names = createOrder.CustomerName.Split(new char[] {' ',',', ';'});
+                    var newCustomer = new Customer
+                    {
+                        Id = customerId,
+                        Address = createOrder.CustomerAddress,
+                        FirstName = names[0],
+                        LastName = names.Length > 1 ? names[1] : names[0],
+                        PhoneNumber = createOrder.CustomerPhoneNumber,
+                        BusinessId = createOrder.BusinessId,
+                        LastOrderDate = DateTime.UtcNow,
+                        
+                    };
+                    _context.Customers.Add(newCustomer);
 
             }
 
-            if (existingCustomer != null)
+            if(existingCustomer != null)
             {
-                existingCustomer.LastOrderDate = DateTime.UtcNow;
+                existingCustomer.LastOrderDate = DateTime.UtcNow;   
             }
 
             var orderId = Guid.NewGuid();
             order.Id = orderId;
-            order.CustomerId = existingCustomer != null ? existingCustomer.Id : customerId;
+            order.CustomerId = existingCustomer != null? existingCustomer.Id : customerId;
             order.PaymentDate = createOrder.PaymentDate.ToUniversalTime();
             await _context.Orders.AddAsync(order);
 
-            var count = await _context.Orders.Where(o => o.BusinessId == order.BusinessId).CountAsync();
+            var count = await _context.Orders.Where(o=> o.BusinessId == order.BusinessId).CountAsync();
 
             order.OrderNumber = count.ToString("D6");
 
+            // Create debt
+
+            if(createOrder != null && createOrder?.PaymentStatus?.ToLower() == "partial" ||  createOrder?.PaymentStatus?.ToLower() == "unpaid" && createOrder.CreateDebtRecord)
+            {
+                Guid debtRecordId = Guid.NewGuid();
+
+                var debtRecord = new DebtorRecord
+                {
+                    Id = debtRecordId,
+                    Address = createOrder.CustomerAddress,
+                    Amount = createOrder.Amount,
+                    BusinessId = createOrder.BusinessId,
+                    CreatedDate = DateTime.UtcNow,
+                    DueDate = DateTime.UtcNow,
+                    OrderId = orderId,
+                    Email = createOrder?.CustomerEmail,
+                    Name = createOrder?.CustomerName,
+                    PhoneNumber = createOrder?.CustomerPhoneNumber,
+                    Purpose = "Debt for order =>" + order.OrderNumber,
+                    RecordDate = DateTime.UtcNow,
+                    Status = "Unpaid"
+                };
+
+                if (createOrder?.PaymentStatus?.ToLower() == "partial")
+                {
+                    debtRecord.Payments.Add(new DebtorPayment
+                    {
+                        Amount = createOrder.PaidAmount,
+                        BusinessId = createOrder.BusinessId,
+                        Date = DateTime.UtcNow,
+                        DebtorRecordId = debtRecordId,
+                    });
+
+                }
+
+                await _context.DebtorRecords.AddAsync(debtRecord);
+            }
+
             await _context.SaveChangesAsync();
 
             var result = _mapper.Map<OrderResponse>(order);
-            return ResponseModel<OrderResponse>.CreateResponse(
-                result,
-                string.Format(ApplicationContants.Messages.CreatedSuccessfulMessage, "Order"),
-                true);
-        }
+                return ResponseModel<OrderResponse>.CreateResponse(
+                    result,
+                    string.Format(ApplicationContants.Messages.CreatedSuccessfulMessage, "Order"),
+                    true);
+            }
 
-        public async Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id)
-        {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id);
-
-            if (order == null)
+            public async Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id)
             {
-                throw new EntityNotFoundException($"Order with ID {id} not found");
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (order == null)
+                {
+                    throw new EntityNotFoundException($"Order with ID {id} not found");
+                }
+
+            foreach (var item in order.OrderItems)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+
+                if (product == null)
+                {
+                    throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
+                }
+
+                product.QuantityInStock += item.Qty;
+
             }
 
             _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
 
-            var result = _mapper.Map<OrderResponse>(order);
-            return ResponseModel<OrderResponse>.CreateResponse(
-                result,
-                string.Format(ApplicationContants.Messages.DeletedSuccessfully, "Order"),
-                true);
-        }
+            var debtorsRecords = await _context.DebtorRecords.Where(d=> d.OrderId == id)
+                .ToListAsync();
 
-        public async Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
-            Guid businessId,
-            int page = 1,
-            int pageSize = 10,
-            string? searchTerm = null,
-            DateTime? startDate = null,
-            DateTime? endDate = null)
-        {
-            var query = _context.Orders
-                .Where(o => o.BusinessId == businessId)
-                .OrderByDescending(q => q.CreatedDate)
-                .Include(o => o.OrderItems)
-                .AsQueryable();
+            if (debtorsRecords != null && debtorsRecords.Any())
+            {
+                _context.DebtorRecords.RemoveRange(debtorsRecords);
+            }
+
+             await _context.SaveChangesAsync();
+
+                var result = _mapper.Map<OrderResponse>(order);
+                return ResponseModel<OrderResponse>.CreateResponse(
+                    result,
+                    string.Format(ApplicationContants.Messages.DeletedSuccessfully, "Order"),
+                    true);
+            }
+
+            public async Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
+                Guid businessId,
+                int page = 1,
+                int pageSize = 10,
+                string? searchTerm = null,
+                DateTime? startDate = null,
+                DateTime? endDate = null)
+            {
+                var query = _context.Orders
+                    .Where(o => o.BusinessId == businessId)
+                    .OrderByDescending(q => q.CreatedDate)
+                    .Include(o => o.OrderItems)
+                    .AsQueryable();
 
             if (startDate.HasValue)
             {
@@ -151,17 +212,17 @@ namespace XZY.WShop.Infrastructure.Services
             }
 
             if (!string.IsNullOrEmpty(searchTerm))
-            {
-                query = query.Where(o =>
-                    o.CustomerName.ToLower().Contains(searchTerm.ToLower()) ||
-                    o.CustomerEmail.ToLower().Contains(searchTerm.ToLower()) ||
-                     o.OrderNumber.ToLower().Contains(searchTerm.ToLower()) ||
-                      o.OrderItems.Any(item => item.ProductName.ToLower().Contains(searchTerm.ToLower())) ||
-                   o.OrderItems.Any(item => item.ProductDescription.ToLower().Contains(searchTerm.ToLower())) ||
-                    o.CustomerPhoneNumber.Contains(searchTerm));
-            }
+                {
+                    query = query.Where(o =>
+                        o.CustomerName.ToLower().Contains(searchTerm.ToLower()) ||
+                        o.CustomerEmail.ToLower().Contains(searchTerm.ToLower()) ||
+                         o.OrderNumber.ToLower().Contains(searchTerm.ToLower()) ||
+                          o.OrderItems.Any(item=> item.ProductName.ToLower().Contains(searchTerm.ToLower())) ||
+                       o.OrderItems.Any(item => item.ProductDescription.ToLower().Contains(searchTerm.ToLower())) ||
+                        o.CustomerPhoneNumber.Contains(searchTerm));
+                }
 
-            var totalCount = await query.CountAsync();
+                var totalCount = await query.CountAsync();
             decimal totalSales = query.Sum(o => o.OrderItems.Sum(oi => oi.Amount * oi.Qty));
 
             // Calculate average order value
@@ -173,37 +234,55 @@ namespace XZY.WShop.Infrastructure.Services
                     .ToListAsync();
 
             var orderResponses = _mapper.Map<List<OrderResponse>>(orders);
-            var pagedList = new PagedList<OrderResponse>(orderResponses, totalCount, page, pageSize);
 
-            return ResponseModel<PagedList<OrderResponse>>.CreateResponse(
-                pagedList,
-                ApplicationContants.Messages.RetrievedSuccessfully,
-                true, metaData: new
-                {
-                    HasNext = pagedList.HasNext,
-                    TotalCount = totalCount,
-                    TotalSales = totalSales,
-                    AverageOrderValue = averageOrderValue,
-                });
-        }
+            var customerIds = orders.Select(o => o.CustomerId)
+                .ToList();
 
-        public async Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id)
-        {
-            var order = await _context.Orders
-                .Include(o => o.OrderItems)
-                .FirstOrDefaultAsync(o => o.Id == id);
+            var customersDic = await _context.Customers.Where(c=> customerIds.Contains(c.Id)).ToDictionaryAsync(c=> c.Id);
 
-            if (order == null)
+
+            foreach (var orderResponse in orderResponses)
             {
-                throw new EntityNotFoundException($"Order with ID {id} not found");
+                if (customersDic != null && customersDic.TryGetValue(orderResponse.CustomerId, out Customer? value))
+                {
+                    var customer = value;
+                    orderResponse.CustomerAddress = customer.Address;
+                    orderResponse.CustomerPhoneNumber = customer.PhoneNumber;
+                    orderResponse.CustomerName = customer.FirstName + " " + customer.LastName;
+                }
             }
 
-            var result = _mapper.Map<OrderResponse>(order);
-            return ResponseModel<OrderResponse>.CreateResponse(
-                result,
-                ApplicationContants.Messages.RetrievedSuccessfully,
-                true);
-        }
+                var pagedList = new PagedList<OrderResponse>(orderResponses, totalCount, page, pageSize);
+
+                return ResponseModel<PagedList<OrderResponse>>.CreateResponse(
+                    pagedList,
+                    ApplicationContants.Messages.RetrievedSuccessfully,
+                    true, metaData: new
+                    {
+                        HasNext = pagedList.HasNext,
+                        TotalCount = totalCount,
+                        TotalSales = totalSales,
+                        AverageOrderValue = averageOrderValue,
+                    });
+            }
+
+            public async Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id)
+            {
+                var order = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == id);
+
+                if (order == null)
+                {
+                    throw new EntityNotFoundException($"Order with ID {id} not found");
+                }
+
+                var result = _mapper.Map<OrderResponse>(order);
+                return ResponseModel<OrderResponse>.CreateResponse(
+                    result,
+                    ApplicationContants.Messages.RetrievedSuccessfully,
+                    true);
+            }
 
         public async Task<ResponseModel<PagedList<OrderResponse>>> GetOrderByCustomerIdAsync(Guid businessId, Guid customerId, int page = 1, int pageSize = 10, string? searchTerm = null)
         {
@@ -246,9 +325,9 @@ namespace XZY.WShop.Infrastructure.Services
                 ApplicationContants.Messages.RetrievedSuccessfully,
                 true, metaData: new
                 {
-                    HasNext = pagedList.HasNext,
-                    TotalSpent = totalSpent,
-                    AverageOrderValue = averageOrderValue,
+                   HasNext = pagedList.HasNext,
+                   TotalSpent = totalSpent,
+                   AverageOrderValue = averageOrderValue,
                 });
         }
 
@@ -590,24 +669,195 @@ namespace XZY.WShop.Infrastructure.Services
         }
 
         private async Task ValidateOrderItems(List<OrderItemDto> orderItems)
-        {
-            foreach (var item in orderItems)
             {
-                var product = await _context.Products.FindAsync(item.ProductId);
-
-                if (product == null)
+                foreach (var item in orderItems)
                 {
-                    throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
-                }
+                    var product = await _context.Products.FindAsync(item.ProductId);
 
-                if (product.QuantityInStock < item.Qty)
-                {
+                    if (product == null)
+                    {
+                        throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
+                    }
+
+                    if(product.QuantityInStock < item.Qty)
+                    {
                     throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing creating this sale.");
+                    }
+
+                    product.QuantityInStock -= item.Qty;
+                   
+                }
+            }
+        #region Update 
+
+        public async Task<ResponseModel<OrderResponse>> UpdateAsync(Guid orderId, UpdateOrder updateOrder)
+        {
+            try
+            {
+                // Validate subscription
+                var helper = new SubscriptionHelper();
+                await helper.ValidateSubscriptionAsync(updateOrder.BusinessId, _context);
+                updateOrder.Id = orderId;
+
+                // Find existing order
+                var existingOrder = await _context.Orders
+                    .Include(o => o.OrderItems)
+                    .FirstOrDefaultAsync(o => o.Id == orderId && o.BusinessId == updateOrder.BusinessId);
+
+                if (existingOrder == null)
+                {
+                    return ResponseModel<OrderResponse>.CreateResponse(
+                        null,
+                        "Order not found",
+                        false);
                 }
 
-                product.QuantityInStock -= item.Qty;
+                // Validate products exist and have sufficient stock (considering current order quantities)
+                await ValidateOrderItemsForUpdate(updateOrder.OrderItems, existingOrder.OrderItems);
 
+                // Update order properties
+                _mapper.Map(updateOrder, existingOrder);
+                existingOrder.ModifiedDate = DateTime.UtcNow;
+
+                // Recalculate total amount
+                existingOrder.Amount = updateOrder.OrderItems.Sum(item => item.Price * item.Qty);
+
+                // Handle customer updates
+                await UpdateCustomerInformation(existingOrder, updateOrder);
+
+                // Update order items (remove old, add new)
+                await UpdateOrderItems(existingOrder, updateOrder.OrderItems);
+
+                await _context.SaveChangesAsync();
+
+                var result = _mapper.Map<OrderResponse>(updateOrder);
+                return ResponseModel<OrderResponse>.CreateResponse(
+                    result,
+                    "Updated successfully",
+                    true);
+            }
+            catch (Exception ex)
+            {
+                // Log exception
+                return ResponseModel<OrderResponse>.CreateResponse(
+                    null,
+                    $"Error updating order: {ex.Message}",
+                    false);
             }
         }
+
+        private async Task ValidateOrderItemsForUpdate(List<OrderItemDto> newItems, List<OrderItem> existingItems)
+        {
+            var productIds = newItems.Select(item => item.ProductId).Distinct().ToList();
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id);
+
+            foreach (var item in newItems)
+            {
+                if (!products.TryGetValue(item.ProductId, out var product))
+                {
+                    throw new Exception($"Product with ID {item.ProductId} not found");
+                }
+
+                // Calculate net quantity change
+                var existingQty = existingItems.FirstOrDefault(i => i.ProductId == item.ProductId)?.Qty ?? 0;
+                var qtyChange = item.Qty - existingQty;
+
+                if (product.QuantityInStock < qtyChange)
+                {
+                    throw new Exception($"Insufficient stock for product {product.Name}. Available: {product.QuantityInStock}, Required: {qtyChange}");
+                }
+            }
+        }
+
+        private async Task UpdateCustomerInformation(Order order, UpdateOrder updateOrder)
+        {
+            string last10 = updateOrder.CustomerPhoneNumber.Length >= 10
+                ? updateOrder.CustomerPhoneNumber.Substring(updateOrder.CustomerPhoneNumber.Length - 10)
+                : updateOrder.CustomerPhoneNumber;
+
+            var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c =>
+                c.PhoneNumber.Contains(last10) && c.BusinessId == updateOrder.BusinessId);
+
+            if (existingCustomer != null)
+            {
+                // Update customer details if they exist
+                existingCustomer.LastOrderDate = DateTime.UtcNow;
+                order.CustomerId = existingCustomer.Id;
+            }
+            else
+            {
+                // Create new customer if not found
+                var names = updateOrder.CustomerName.Split(new char[] { ' ', ',', ';' });
+                var newCustomer = new Customer
+                {
+                    Id = Guid.NewGuid(),
+                    Address = updateOrder.CustomerAddress,
+                    FirstName = names[0],
+                    LastName = names.Length > 1 ? names[1] : names[0],
+                    PhoneNumber = updateOrder.CustomerPhoneNumber,
+                    BusinessId = updateOrder.BusinessId,
+                    LastOrderDate = DateTime.UtcNow,
+                };
+                _context.Customers.Add(newCustomer);
+                order.CustomerId = newCustomer.Id;
+            }
+        }
+        private async Task UpdateOrderItems(Order order, List<OrderItemDto> newOrderItems)
+        {
+            // Get existing items directly from context for accurate state tracking
+            var existingItems = await _context.OrderItems
+                .Where(oi => oi.OrderId == order.Id)
+                .ToListAsync();
+
+            // Store for stock calculation
+            var oldItems = existingItems.ToList();
+
+            // Remove existing items
+            _context.OrderItems.RemoveRange(existingItems);
+
+            // Create new items
+            var orderItems = _mapper.Map<List<OrderItem>>(newOrderItems);
+            foreach (var item in orderItems)
+            {
+                item.Id = Guid.NewGuid();
+                item.OrderId = order.Id;
+                item.CreatedDate = DateTime.UtcNow;
+            }
+
+            // Add new items to context
+            await _context.OrderItems.AddRangeAsync(orderItems);
+
+            // Update navigation property
+            order.OrderItems = orderItems;
+
+            // Update product stock
+            await UpdateProductStock(newOrderItems, oldItems);
+        }
+        private async Task UpdateProductStock(List<OrderItemDto> newItems, List<OrderItem> oldItems)
+        {
+            var productIds = newItems.Select(i => i.ProductId)
+                .Union(oldItems.Select(i => i.ProductId))
+                .Distinct()
+                .ToList();
+
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.Id))
+                .ToDictionaryAsync(p => p.Id);
+
+            foreach (var product in products.Values)
+            {
+                var oldQty = oldItems.Where(i => i.ProductId == product.Id).Sum(i => i.Qty);
+                var newQty = newItems.Where(i => i.ProductId == product.Id).Sum(i => i.Qty);
+                var qtyChange = newQty - oldQty;
+
+                product.QuantityInStock -= qtyChange;
+                product.ModifiedDate = DateTime.UtcNow;
+            }
+        }
+
+        #endregion
+
     }
 }
