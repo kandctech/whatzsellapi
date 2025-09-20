@@ -1,49 +1,48 @@
 ﻿using AutoMapper;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
+using iTextSharp.text.pdf.draw;
+using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
 using XYZ.WShop.Application.Constants;
-using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Dtos;
+using XYZ.WShop.Application.Dtos.Orders;
 using XYZ.WShop.Application.Exceptions;
 using XYZ.WShop.Application.Helpers;
 using XYZ.WShop.Application.Interfaces.Services;
 using XYZ.WShop.Domain;
 using XZY.WShop.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using iTextSharp.text.pdf.draw;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
-using OfficeOpenXml;
-using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
+{
+    public class OrderService : IOrderService
     {
-        public class OrderService : IOrderService
+        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly IProductService _productService;
+
+        public OrderService(
+            ApplicationDbContext context,
+            IMapper mapper,
+            IProductService productService)
         {
-            private readonly ApplicationDbContext _context;
-            private readonly IMapper _mapper;
-            private readonly IProductService _productService;
+            _context = context;
+            _mapper = mapper;
+            _productService = productService;
+        }
 
-            public OrderService(
-                ApplicationDbContext context,
-                IMapper mapper,
-                IProductService productService)
-            {
-                _context = context;
-                _mapper = mapper;
-                _productService = productService;
-            }
-
-            public async Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder)
-            {
+        public async Task<ResponseModel<OrderResponse>> AddAsync(CreateOrder createOrder)
+        {
             var helper = new SubscriptionHelper();
             await helper.ValidateSubscriptionAsync(createOrder.BusinessId, _context);
             // Validate products exist and have sufficient stock
             await ValidateOrderItems(createOrder.OrderItems);
 
-                var order = _mapper.Map<Order>(createOrder);
-                order.CreatedDate = DateTime.UtcNow;
+            var order = _mapper.Map<Order>(createOrder);
+            order.CreatedDate = DateTime.UtcNow;
 
-                // Calculate total amount
-                order.Amount = createOrder.OrderItems.Sum(item => item.Price * item.Qty);
+            // Calculate total amount
+            order.Amount = createOrder.OrderItems.Sum(item => item.Price * item.Qty);
 
             string last10;
 
@@ -54,90 +53,90 @@ namespace XZY.WShop.Infrastructure.Services
             }
             else
             {
-                last10 = order.CustomerPhoneNumber; 
+                last10 = order.CustomerPhoneNumber;
             }
 
-            var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c=> c.PhoneNumber.Contains(last10) && c.BusinessId == createOrder.BusinessId);
+            var existingCustomer = await _context.Customers.FirstOrDefaultAsync(c => c.PhoneNumber.Contains(last10) && c.BusinessId == createOrder.BusinessId);
 
 
             var customerId = Guid.NewGuid();
 
             if (existingCustomer == null)
             {
-                var names = createOrder.CustomerName.Split(new char[] {' ',',', ';'});
-                    var newCustomer = new Customer
-                    {
-                        Id = customerId,
-                        Address = createOrder.CustomerAddress,
-                        FirstName = names[0],
-                        LastName = names.Length > 1 ? names[1] : names[0],
-                        PhoneNumber = createOrder.CustomerPhoneNumber,
-                        BusinessId = createOrder.BusinessId,
-                        LastOrderDate = DateTime.UtcNow,
-                        
-                    };
-                    _context.Customers.Add(newCustomer);
+                var names = createOrder.CustomerName.Split(new char[] { ' ', ',', ';' });
+                var newCustomer = new Customer
+                {
+                    Id = customerId,
+                    Address = createOrder.CustomerAddress,
+                    FirstName = names[0],
+                    LastName = names.Length > 1 ? names[1] : names[0],
+                    PhoneNumber = createOrder.CustomerPhoneNumber,
+                    BusinessId = createOrder.BusinessId,
+                    LastOrderDate = DateTime.UtcNow,
+
+                };
+                _context.Customers.Add(newCustomer);
 
             }
 
-            if(existingCustomer != null)
+            if (existingCustomer != null)
             {
-                existingCustomer.LastOrderDate = DateTime.UtcNow;   
+                existingCustomer.LastOrderDate = DateTime.UtcNow;
             }
 
             var orderId = Guid.NewGuid();
             order.Id = orderId;
-            order.CustomerId = existingCustomer != null? existingCustomer.Id : customerId;
+            order.CustomerId = existingCustomer != null ? existingCustomer.Id : customerId;
             order.PaymentDate = createOrder.PaymentDate.ToUniversalTime();
             await _context.Orders.AddAsync(order);
 
-            var count = await _context.Orders.Where(o=> o.BusinessId == order.BusinessId).CountAsync();
+            var count = await _context.Orders.Where(o => o.BusinessId == order.BusinessId).CountAsync();
 
-            order.OrderNumber = count.ToString("D6");    
+            order.OrderNumber = count.ToString("D6");
 
             await _context.SaveChangesAsync();
 
             var result = _mapper.Map<OrderResponse>(order);
-                return ResponseModel<OrderResponse>.CreateResponse(
-                    result,
-                    string.Format(ApplicationContants.Messages.CreatedSuccessfulMessage, "Order"),
-                    true);
+            return ResponseModel<OrderResponse>.CreateResponse(
+                result,
+                string.Format(ApplicationContants.Messages.CreatedSuccessfulMessage, "Order"),
+                true);
+        }
+
+        public async Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                throw new EntityNotFoundException($"Order with ID {id} not found");
             }
 
-            public async Task<ResponseModel<OrderResponse>> DeleteAsync(Guid id)
-            {
-                var order = await _context.Orders
-                    .Include(o => o.OrderItems)
-                    .FirstOrDefaultAsync(o => o.Id == id);
+            _context.Orders.Remove(order);
+            await _context.SaveChangesAsync();
 
-                if (order == null)
-                {
-                    throw new EntityNotFoundException($"Order with ID {id} not found");
-                }
+            var result = _mapper.Map<OrderResponse>(order);
+            return ResponseModel<OrderResponse>.CreateResponse(
+                result,
+                string.Format(ApplicationContants.Messages.DeletedSuccessfully, "Order"),
+                true);
+        }
 
-                _context.Orders.Remove(order);
-                await _context.SaveChangesAsync();
-
-                var result = _mapper.Map<OrderResponse>(order);
-                return ResponseModel<OrderResponse>.CreateResponse(
-                    result,
-                    string.Format(ApplicationContants.Messages.DeletedSuccessfully, "Order"),
-                    true);
-            }
-
-            public async Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
-                Guid businessId,
-                int page = 1,
-                int pageSize = 10,
-                string? searchTerm = null,
-                DateTime? startDate = null,
-                DateTime? endDate = null)
-            {
-                var query = _context.Orders
-                    .Where(o => o.BusinessId == businessId)
-                    .OrderByDescending(q => q.CreatedDate)
-                    .Include(o => o.OrderItems)
-                    .AsQueryable();
+        public async Task<ResponseModel<PagedList<OrderResponse>>> GetAllAsync(
+            Guid businessId,
+            int page = 1,
+            int pageSize = 10,
+            string? searchTerm = null,
+            DateTime? startDate = null,
+            DateTime? endDate = null)
+        {
+            var query = _context.Orders
+                .Where(o => o.BusinessId == businessId)
+                .OrderByDescending(q => q.CreatedDate)
+                .Include(o => o.OrderItems)
+                .AsQueryable();
 
             if (startDate.HasValue)
             {
@@ -152,17 +151,17 @@ namespace XZY.WShop.Infrastructure.Services
             }
 
             if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    query = query.Where(o =>
-                        o.CustomerName.ToLower().Contains(searchTerm.ToLower()) ||
-                        o.CustomerEmail.ToLower().Contains(searchTerm.ToLower()) ||
-                         o.OrderNumber.ToLower().Contains(searchTerm.ToLower()) ||
-                          o.OrderItems.Any(item=> item.ProductName.ToLower().Contains(searchTerm.ToLower())) ||
-                       o.OrderItems.Any(item => item.ProductDescription.ToLower().Contains(searchTerm.ToLower())) ||
-                        o.CustomerPhoneNumber.Contains(searchTerm));
-                }
+            {
+                query = query.Where(o =>
+                    o.CustomerName.ToLower().Contains(searchTerm.ToLower()) ||
+                    o.CustomerEmail.ToLower().Contains(searchTerm.ToLower()) ||
+                     o.OrderNumber.ToLower().Contains(searchTerm.ToLower()) ||
+                      o.OrderItems.Any(item => item.ProductName.ToLower().Contains(searchTerm.ToLower())) ||
+                   o.OrderItems.Any(item => item.ProductDescription.ToLower().Contains(searchTerm.ToLower())) ||
+                    o.CustomerPhoneNumber.Contains(searchTerm));
+            }
 
-                var totalCount = await query.CountAsync();
+            var totalCount = await query.CountAsync();
             decimal totalSales = query.Sum(o => o.OrderItems.Sum(oi => oi.Amount * oi.Qty));
 
             // Calculate average order value
@@ -173,38 +172,38 @@ namespace XZY.WShop.Infrastructure.Services
                     .Take(pageSize)
                     .ToListAsync();
 
-                var orderResponses = _mapper.Map<List<OrderResponse>>(orders);
-                var pagedList = new PagedList<OrderResponse>(orderResponses, totalCount, page, pageSize);
+            var orderResponses = _mapper.Map<List<OrderResponse>>(orders);
+            var pagedList = new PagedList<OrderResponse>(orderResponses, totalCount, page, pageSize);
 
-                return ResponseModel<PagedList<OrderResponse>>.CreateResponse(
-                    pagedList,
-                    ApplicationContants.Messages.RetrievedSuccessfully,
-                    true, metaData: new
-                    {
-                        HasNext = pagedList.HasNext,
-                        TotalCount = totalCount,
-                        TotalSales = totalSales,
-                        AverageOrderValue = averageOrderValue,
-                    });
-            }
-
-            public async Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id)
-            {
-                var order = await _context.Orders
-                    .Include(o => o.OrderItems)
-                    .FirstOrDefaultAsync(o => o.Id == id);
-
-                if (order == null)
+            return ResponseModel<PagedList<OrderResponse>>.CreateResponse(
+                pagedList,
+                ApplicationContants.Messages.RetrievedSuccessfully,
+                true, metaData: new
                 {
-                    throw new EntityNotFoundException($"Order with ID {id} not found");
-                }
+                    HasNext = pagedList.HasNext,
+                    TotalCount = totalCount,
+                    TotalSales = totalSales,
+                    AverageOrderValue = averageOrderValue,
+                });
+        }
 
-                var result = _mapper.Map<OrderResponse>(order);
-                return ResponseModel<OrderResponse>.CreateResponse(
-                    result,
-                    ApplicationContants.Messages.RetrievedSuccessfully,
-                    true);
+        public async Task<ResponseModel<OrderResponse>> GetByIdAsync(Guid id)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.Id == id);
+
+            if (order == null)
+            {
+                throw new EntityNotFoundException($"Order with ID {id} not found");
             }
+
+            var result = _mapper.Map<OrderResponse>(order);
+            return ResponseModel<OrderResponse>.CreateResponse(
+                result,
+                ApplicationContants.Messages.RetrievedSuccessfully,
+                true);
+        }
 
         public async Task<ResponseModel<PagedList<OrderResponse>>> GetOrderByCustomerIdAsync(Guid businessId, Guid customerId, int page = 1, int pageSize = 10, string? searchTerm = null)
         {
@@ -247,9 +246,9 @@ namespace XZY.WShop.Infrastructure.Services
                 ApplicationContants.Messages.RetrievedSuccessfully,
                 true, metaData: new
                 {
-                   HasNext = pagedList.HasNext,
-                   TotalSpent = totalSpent,
-                   AverageOrderValue = averageOrderValue,
+                    HasNext = pagedList.HasNext,
+                    TotalSpent = totalSpent,
+                    AverageOrderValue = averageOrderValue,
                 });
         }
 
@@ -591,24 +590,24 @@ namespace XZY.WShop.Infrastructure.Services
         }
 
         private async Task ValidateOrderItems(List<OrderItemDto> orderItems)
+        {
+            foreach (var item in orderItems)
             {
-                foreach (var item in orderItems)
+                var product = await _context.Products.FindAsync(item.ProductId);
+
+                if (product == null)
                 {
-                    var product = await _context.Products.FindAsync(item.ProductId);
-
-                    if (product == null)
-                    {
-                        throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
-                    }
-
-                    if(product.QuantityInStock < item.Qty)
-                    {
-                    throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing creating this sale.");
-                    }
-
-                    product.QuantityInStock -= item.Qty;
-                   
+                    throw new EntityNotFoundException($"Product with ID {item.ProductId} not found");
                 }
+
+                if (product.QuantityInStock < item.Qty)
+                {
+                    throw new BadRequestException($"Product {item.Name} has only {product.QuantityInStock} left. Please update the product quantity before placing creating this sale.");
+                }
+
+                product.QuantityInStock -= item.Qty;
+
             }
         }
     }
+}
