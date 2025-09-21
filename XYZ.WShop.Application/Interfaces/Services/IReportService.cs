@@ -8,5 +8,6 @@ namespace XYZ.WShop.Application.Interfaces.Services
     {
         Task<ReportResponseDto> GetReportDataAsync(Guid businessId, ReportRequestDto request);
         Task<DashboardResponse> GetReportDashbordAsync(Guid businessId);
+        Task<byte[]> GenerateProductSalesReportAsync(DateTime startDate, DateTime endDate, Guid businessId);
     }
 }

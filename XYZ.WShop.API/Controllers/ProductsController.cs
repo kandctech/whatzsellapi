@@ -124,5 +124,6 @@ namespace XYZ.WShop.API.Controllers
             // Fallback to remote IP address
             return context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
         }
+
     }
 }

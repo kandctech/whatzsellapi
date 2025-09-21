@@ -37,5 +37,22 @@ namespace XYZ.WShop.API.Controllers
             var result = await _reportService.GetReportDashbordAsync(businessId);
             return Ok(result);
         }
+
+        [HttpGet("product-sales")]
+        public async Task<IActionResult> DownloadProductSalesReport([FromQuery] DateTime startDate,[FromQuery] DateTime endDate, [FromQuery] Guid businessId)
+        {
+            try
+            {
+                var fileContent = await _reportService.GenerateProductSalesReportAsync(startDate, endDate, businessId);
+
+                return File(fileContent,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"ProductSalesReport_{startDate:yyyyMMdd}_{endDate:yyyyMMdd}.xlsx");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error generating report: {ex.Message}");
+            }
+        }
     }
 }

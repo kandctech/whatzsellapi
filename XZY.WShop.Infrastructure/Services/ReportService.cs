@@ -1,8 +1,11 @@
 ﻿
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using XYZ.WShop.Application.Dtos.Dashboard;
 using XYZ.WShop.Application.Dtos.Orders;
+using XYZ.WShop.Application.Dtos.Product;
 using XYZ.WShop.Application.Dtos.Reports;
 using XYZ.WShop.Application.Interfaces.Services;
 using XZY.WShop.Infrastructure.Data;
@@ -289,5 +292,197 @@ namespace XYZ.WShop.Infrastructure.Services
             var change = ((currentTotal - previousTotal) / previousTotal) * 100;
             return $"{(change >= 0 ? "+" : "")}{change:0}%";
         }
+
+        // Sales Report
+        public async Task<byte[]> GenerateProductSalesReportAsync(DateTime startDate, DateTime endDate, Guid businessId)
+        {
+            startDate = startDate.ToUniversalTime();
+            endDate = endDate.ToUniversalTime();
+            // Get products and their sales data within the date range
+            var productData = await _context.Products
+                .Where(p => p.BusinessId == businessId)
+                .Select(p => new ProductSalesDto
+                {
+                    ProductId = p.Id,
+                    ProductName = p.Name,
+                    QuantityAvailable = p.QuantityInStock ?? 0,
+                    UnitPrice = p.UnitPrice ?? 0,
+                    QuantitySold = _context.OrderItems
+                        .Where(oi => oi.ProductId == p.Id &&
+                                     oi.CreatedDate >= startDate &&
+                                     oi.CreatedDate <= endDate)
+                        .Sum(oi => oi.Qty),
+                    TotalSales = _context.OrderItems
+                        .Where(oi => oi.ProductId == p.Id &&
+                                     oi.CreatedDate >= startDate &&
+                                     oi.CreatedDate <= endDate)
+                        .Sum(oi => oi.Qty * oi.Amount)
+                })
+                .ToListAsync();
+
+            // Calculate derived values
+            foreach (var product in productData)
+            {
+                product.RemainingStock = Math.Abs( product.QuantityAvailable - product.QuantitySold);
+                product.RemainingSkuAmount = Math.Abs( product.RemainingStock * product.UnitPrice);
+            }
+
+            // Generate Excel file
+            return GenerateExcelFile(productData, startDate, endDate);
+        }
+
+        private byte[] GenerateExcelFile(List<ProductSalesDto> data, DateTime startDate, DateTime endDate)
+        {
+            var workbook = new XSSFWorkbook();
+            var sheet = workbook.CreateSheet("Product Sales Report");
+
+            // Add report title FIRST
+            AddReportTitle(workbook, sheet, startDate, endDate);
+
+            // Create header row with styling (now at row 1 instead of 0)
+            var headerStyle = CreateHeaderStyle(workbook);
+            var headerRow = sheet.CreateRow(1);
+
+            string[] headers = {
+        "Product Name", "Quantity Available", "Quantity Sold",
+        "Remaining Stock", "Retail Price", "Remaining SKU Amount", "Total Sales"
+    };
+
+            for (int i = 0; i < headers.Length; i++)
+            {
+                var cell = headerRow.CreateCell(i);
+                cell.SetCellValue(headers[i]);
+                cell.CellStyle = headerStyle;
+                sheet.SetColumnWidth(i, 20 * 256);
+            }
+
+            // Create currency style for decimal values
+            var currencyStyle = CreateCurrencyStyle(workbook);
+            var dataStyle = CreateDataStyle(workbook);
+
+            // Fill data rows (start from row 2 instead of 1)
+            for (int i = 0; i < data.Count; i++)
+            {
+                var row = sheet.CreateRow(i + 2);
+                var product = data[i];
+
+                CreateCell(row, 0, product?.ProductName, dataStyle);
+                CreateCell(row, 1, product.QuantityAvailable, dataStyle);
+                CreateCell(row, 2, product.QuantitySold, dataStyle);
+                CreateCell(row, 3, product.RemainingStock, dataStyle);
+                CreateCurrencyCell(row, 4, product.UnitPrice, currencyStyle); // Retail Price
+                CreateCurrencyCell(row, 5, product.RemainingSkuAmount, currencyStyle); // Remaining SKU Amount
+                CreateCurrencyCell(row, 6, product.TotalSales, currencyStyle); // Total Sales
+            }
+
+            // Save to memory stream
+            using var memoryStream = new MemoryStream();
+            workbook.Write(memoryStream);
+            return memoryStream.ToArray();
+        }
+
+        private ICellStyle CreateCurrencyStyle(XSSFWorkbook workbook)
+        {
+            var style = workbook.CreateCellStyle();
+            var format = workbook.CreateDataFormat();
+
+            style.DataFormat = format.GetFormat("#,##0.00");
+            style.Alignment = HorizontalAlignment.Right;
+
+            // Set borders
+            style.BorderBottom = BorderStyle.Thin;
+            style.BorderLeft = BorderStyle.Thin;
+            style.BorderRight = BorderStyle.Thin;
+            style.BorderTop = BorderStyle.Thin;
+
+            return style;
+        }
+
+        // Add this new method for creating currency cells
+        private void CreateCurrencyCell(IRow row, int columnIndex, decimal value, ICellStyle style)
+        {
+            var cell = row.CreateCell(columnIndex);
+            cell.SetCellValue((double)value);
+            cell.CellStyle = style;
+        }
+        private ICellStyle CreateHeaderStyle(XSSFWorkbook workbook)
+        {
+            var style = workbook.CreateCellStyle();
+            var font = workbook.CreateFont();
+
+            font.IsBold = true;
+            font.FontHeightInPoints = 12;
+            font.Color = NPOI.SS.UserModel.IndexedColors.White.Index;
+
+            style.SetFont(font);
+            style.FillForegroundColor = NPOI.SS.UserModel.IndexedColors.DarkBlue.Index;
+            style.FillPattern = FillPattern.SolidForeground;
+            style.Alignment = HorizontalAlignment.Center;
+
+            // Set borders
+            style.BorderBottom = BorderStyle.Thin;
+            style.BorderLeft = BorderStyle.Thin;
+            style.BorderRight = BorderStyle.Thin;
+            style.BorderTop = BorderStyle.Thin;
+
+            return style;
+        }
+
+        private ICellStyle CreateDataStyle(XSSFWorkbook workbook)
+        {
+            var style = workbook.CreateCellStyle();
+            style.Alignment = HorizontalAlignment.Left;
+
+            // Set borders
+            style.BorderBottom = BorderStyle.Thin;
+            style.BorderLeft = BorderStyle.Thin;
+            style.BorderRight = BorderStyle.Thin;
+            style.BorderTop = BorderStyle.Thin;
+
+            return style;
+        }
+
+        private void CreateCell(IRow row, int columnIndex, string value, ICellStyle style)
+        {
+            var cell = row.CreateCell(columnIndex);
+            cell.SetCellValue(value);
+            cell.CellStyle = style;
+        }
+
+        private void CreateCell(IRow row, int columnIndex, int value, ICellStyle style)
+        {
+            var cell = row.CreateCell(columnIndex);
+            cell.SetCellValue(value);
+            cell.CellStyle = style;
+        }
+
+        private void CreateCell(IRow row, int columnIndex, decimal value, ICellStyle style)
+        {
+            var cell = row.CreateCell(columnIndex);
+            cell.SetCellValue((double)value);
+            cell.CellStyle = style;
+        }
+
+        private void AddReportTitle(XSSFWorkbook workbook, ISheet sheet, DateTime startDate, DateTime endDate)
+        {
+            // Create title row at the very top (row 0)
+            var titleRow = sheet.CreateRow(0);
+            var titleCell = titleRow.CreateCell(0);
+
+            var titleStyle = workbook.CreateCellStyle();
+            var titleFont = workbook.CreateFont();
+
+            titleFont.IsBold = true;
+            titleFont.FontHeightInPoints = 16;
+            titleStyle.SetFont(titleFont);
+            titleStyle.Alignment = HorizontalAlignment.Center;
+
+            titleCell.SetCellValue($"Product Sales Report ({startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
+            titleCell.CellStyle = titleStyle;
+
+            // Merge cells for title (span all 7 columns)
+            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 6));
+        }
+
     }
 }
