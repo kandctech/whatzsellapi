@@ -12,7 +12,6 @@ using iTextSharp.text.pdf.draw;
 using iTextSharp.text.pdf;
 using iTextSharp.text;
 using OfficeOpenXml;
-using XYZ.WShop.Application.Dtos.Product;
 
 namespace XZY.WShop.Infrastructure.Services
     {
