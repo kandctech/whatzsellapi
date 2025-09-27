@@ -12,6 +12,7 @@ namespace XYZ.WShop.Domain
         public string? CustomerEmail { get; set; }
         public string? OrderNumber { get; set; }
         public string CustomerPhoneNumber { get; set; }
+        public string? CustomerAddrss { get; set; }
         public string? Note { get; set; }
         public string? PaymentLink { get; set; }
         public DateTime? DatePaymentLinkGenerated { get; set; }

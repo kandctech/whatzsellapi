@@ -245,9 +245,7 @@ namespace XZY.WShop.Infrastructure.Services
                 if (customersDic != null && customersDic.TryGetValue(orderResponse.CustomerId, out Customer? value))
                 {
                     var customer = value;
-                    orderResponse.CustomerAddress = customer.Address;
-                    orderResponse.CustomerPhoneNumber = customer.PhoneNumber;
-                    orderResponse.CustomerName = customer.FirstName + " " + customer.LastName;
+                    orderResponse.CustomerAddress = string.IsNullOrEmpty(orderResponse?.CustomerAddress)? customer.Address : orderResponse.CustomerAddress;
                 }
             }
 
